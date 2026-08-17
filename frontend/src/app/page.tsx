@@ -13,11 +13,14 @@ import {
   GraduationCap,
   Handshake,
   Link2,
+  LockKeyhole,
   MailCheck,
   MessageCircleOff,
   Shield,
   Send,
   Sparkles,
+  Timer,
+  UploadCloud,
   UserCheck2,
   UserRoundSearch,
 } from "lucide-react";
@@ -64,16 +67,16 @@ export default function Home() {
               Built for ambitious applicants and busy referees
             </p>
             <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-              Stop chasing references. Start tracking real progress.
+              Stop chasing referees. Get references submitted with confidence.
             </h1>
             <p className="max-w-2xl text-lg leading-relaxed text-muted">
-              RefereeRequest turns scattered emails and WhatsApp follow-ups into
-              one clean, secure workflow from request to submission.
+              RefereeRequest replaces scattered chats and email threads with one
+              clear, secure workflow from request creation to final submission.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg">
                 <Link href="/signup" className="inline-flex items-center gap-2">
-                  Create free account
+                  Create your first request
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -81,6 +84,9 @@ export default function Home() {
                 <Link href="/dashboard/requests/new">Build your first request</Link>
               </Button>
             </div>
+            <p className="text-sm font-medium text-muted">
+              No referee account required · No payment required to start
+            </p>
             <div className="grid gap-3 pt-2 text-sm text-foreground sm:grid-cols-2">
               <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm">
                 <CheckCircle2 className="h-4 w-4 text-secondary" />
@@ -98,6 +104,35 @@ export default function Home() {
                 <CheckCircle2 className="h-4 w-4 text-secondary" />
                 Designed for mobile submission
               </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border border-border bg-surface/95 p-3 shadow-sm">
+                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                  <Timer className="h-3.5 w-3.5 text-primary" />
+                  Speed
+                </p>
+                <p className="mt-1 text-sm font-medium text-foreground">
+                  Typical request setup in minutes
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface/95 p-3 shadow-sm">
+                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                  <LockKeyhole className="h-3.5 w-3.5 text-secondary" />
+                  Security
+                </p>
+                <p className="mt-1 text-sm font-medium text-foreground">
+                  Expiring links with scoped access
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface/95 p-3 shadow-sm">
+                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                  <UploadCloud className="h-3.5 w-3.5 text-tertiary" />
+                  Simplicity
+                </p>
+                <p className="mt-1 text-sm font-medium text-foreground">
+                  One upload path for supporting files
+                </p>
+              </div>
             </div>
           </div>
 
@@ -222,7 +257,7 @@ export default function Home() {
 
         <section className="mt-12 grid gap-4 rounded-2xl border border-border bg-surface p-8 shadow-sm lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
-            <h2 className="text-2xl font-semibold text-foreground">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
               Built for scholarships, universities, fellowships, internships, and
               jobs.
             </h2>
@@ -260,6 +295,29 @@ export default function Home() {
               <Link href="/signin" className="inline-flex items-center gap-2">
                 I already have an account
                 <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary to-secondary p-7 text-white shadow-lg shadow-primary/20">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/80">
+                <Sparkles className="h-4 w-4" />
+                Ready to stop follow-up fatigue?
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                Launch your first request now and track every step to submission.
+              </h2>
+              <p className="mt-2 text-sm text-white/85">
+                Purpose, deadline, and documents in one place for every referee.
+              </p>
+            </div>
+            <Button asChild size="lg" variant="secondary">
+              <Link href="/signup" className="inline-flex items-center gap-2">
+                Start free
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
