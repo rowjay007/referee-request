@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
+import { saveAuthToken } from "@/lib/auth";
 
 type LoginResponse = {
   user: { id: string; email: string; fullName: string };
@@ -10,6 +12,7 @@ type LoginResponse = {
 };
 
 export default function SigninPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -26,8 +29,9 @@ export default function SigninPage() {
         method: "POST",
         body: { email, password },
       });
-      localStorage.setItem("rr_token", data.token);
+      saveAuthToken(data.token);
       setMessage("Signed in successfully.");
+      router.push("/dashboard/requests");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed.");
     } finally {

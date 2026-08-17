@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
+import { saveAuthToken } from "@/lib/auth";
 
 type SignupResponse = {
   user: { id: string; email: string; fullName: string };
@@ -11,6 +13,7 @@ type SignupResponse = {
 };
 
 export default function SignupPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -30,9 +33,10 @@ export default function SignupPage() {
         method: "POST",
         body: { email, fullName, password },
       });
-      localStorage.setItem("rr_token", data.token);
+      saveAuthToken(data.token);
       posthog.capture("signup_completed");
       setMessage("Account created successfully.");
+      router.push("/dashboard/requests");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed.");
     } finally {

@@ -12,6 +12,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rowjay007/referee-request/backend/internal/config"
 	"github.com/rowjay007/referee-request/backend/internal/httpapi/handlers"
+	authmiddleware "github.com/rowjay007/referee-request/backend/internal/httpapi/middleware"
+	"github.com/rowjay007/referee-request/backend/internal/storage"
 	"github.com/rowjay007/referee-request/backend/internal/store"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -32,7 +34,11 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) http.H
 	router.Use(requestLogMiddleware(logger))
 
 	userStore := store.NewUserStore(db)
+	requestStore := store.NewReferenceRequestStore(db)
+	documentStorage := storage.NewLocalStore(cfg.StorageLocalRoot)
 	authHandler := handlers.NewAuthHandler(cfg, userStore)
+	requestHandler := handlers.NewReferenceRequestHandler(requestStore)
+	documentHandler := handlers.NewDocumentHandler(cfg, requestStore, documentStorage)
 
 	router.Get("/health", handlers.Health)
 
@@ -42,6 +48,18 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) http.H
 			authRouter.Use(httprate.LimitByIP(10, time.Minute))
 			authRouter.Post("/signup", authHandler.Signup)
 			authRouter.Post("/login", authHandler.Login)
+		})
+
+		r.Route("/requests", func(requestRouter chi.Router) {
+			requestRouter.Use(authmiddleware.RequireCandidateAuth(cfg.JWTSecret))
+			requestRouter.Use(httprate.LimitByIP(60, time.Minute))
+
+			requestRouter.Get("/", requestHandler.List)
+			requestRouter.Post("/", requestHandler.Create)
+			requestRouter.Get("/{requestId}", requestHandler.Get)
+			requestRouter.Post("/{requestId}/send", requestHandler.Send)
+			requestRouter.Get("/{requestId}/documents", documentHandler.List)
+			requestRouter.Post("/{requestId}/documents", documentHandler.Upload)
 		})
 	})
 

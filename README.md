@@ -41,6 +41,15 @@ cd frontend && npm run lint && npm run build
 cd backend && go test ./...
 ```
 
+## Phase 2 endpoints
+
+- `POST /api/v1/requests`
+- `GET /api/v1/requests`
+- `GET /api/v1/requests/{requestId}`
+- `POST /api/v1/requests/{requestId}/documents`
+- `GET /api/v1/requests/{requestId}/documents`
+- `POST /api/v1/requests/{requestId}/send`
+
 ## Environment model
 
 - `dev` branch deploys to staging infrastructure and staging Supabase
