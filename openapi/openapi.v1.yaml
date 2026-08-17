@@ -1,0 +1,64 @@
+openapi: 3.1.0
+info:
+  title: RefereeRequest API
+  version: 1.0.0
+servers:
+  - url: https://api.refereerequest.com
+  - url: https://staging-api.refereerequest.com
+paths:
+  /api/v1/health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: API healthy
+  /api/v1/auth/signup:
+    post:
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, fullName, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                fullName:
+                  type: string
+                  minLength: 2
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        "201":
+          description: Signup successful
+        "400":
+          description: Validation error
+        "409":
+          description: Email exists
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful
+        "400":
+          description: Validation error
+        "401":
+          description: Invalid credentials
