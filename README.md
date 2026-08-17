@@ -55,4 +55,16 @@ cd backend && go test ./...
 - `dev` branch deploys to staging infrastructure and staging Supabase
 - `main` branch deploys to production infrastructure and production Supabase
 - staging and production credentials must remain isolated
+
+## Deployment secrets
+
+Set these GitHub repository secrets for staging automation:
+
+- `STAGING_DATABASE_URL`
+- `STAGING_SUPABASE_URL`
+- `STAGING_SUPABASE_ANON_KEY`
+- `STAGING_SUPABASE_SERVICE_ROLE_KEY`
+- `STAGING_SUPABASE_PROJECT_ID`
+- `STAGING_API_BASE_URL`
+- `RENDER_STAGING_DEPLOY_HOOK`
 # referee-request
