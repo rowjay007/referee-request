@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -76,5 +77,35 @@ func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (*User, er
 	if err != nil {
 		return nil, err
 	}
+	return user, nil
+}
+
+func (s *UserStore) UpsertOAuthUser(ctx context.Context, email, fullName, placeholderPasswordHash string) (*User, error) {
+	cleanFullName := strings.TrimSpace(fullName)
+	if cleanFullName == "" {
+		cleanFullName = strings.Split(email, "@")[0]
+	}
+
+	const query = `
+		INSERT INTO users (email, full_name, password_hash)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (email) DO UPDATE
+		SET full_name = EXCLUDED.full_name,
+			updated_at = NOW()
+		RETURNING id, email, full_name, password_hash, created_at
+	`
+
+	user := &User{}
+	err := s.db.QueryRow(ctx, query, email, cleanFullName, placeholderPasswordHash).Scan(
+		&user.ID,
+		&user.Email,
+		&user.FullName,
+		&user.PasswordHash,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return user, nil
 }

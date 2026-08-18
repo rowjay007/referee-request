@@ -1,11 +1,11 @@
-name: deploy-staging-backend
+name: deploy-production-backend
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
     paths:
       - "backend/**"
-      - ".github/workflows/deploy-staging-backend.yml"
+      - ".github/workflows/deploy-production-backend.yml"
   workflow_dispatch:
 
 jobs:
@@ -21,40 +21,40 @@ jobs:
             | tar -xz
           sudo mv migrate /usr/local/bin/migrate
 
-      - name: Run staging database migrations
+      - name: Run production database migrations
         env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "Missing required secret: STAGING_DATABASE_URL"
+            echo "Missing required secret: PRODUCTION_DATABASE_URL"
             exit 1
           fi
           migrate -path backend/migrations -database "$DATABASE_URL" up
 
-      - name: Trigger Render staging deploy
+      - name: Trigger Render production deploy
         env:
-          DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}
+          DEPLOY_HOOK: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}
         run: |
           if [ -z "$DEPLOY_HOOK" ]; then
-            echo "Missing required secret: RENDER_STAGING_DEPLOY_HOOK"
+            echo "Missing required secret: RENDER_PRODUCTION_DEPLOY_HOOK"
             exit 1
           fi
           curl --fail --silent --show-error --request POST "$DEPLOY_HOOK"
 
-      - name: Verify staging health
+      - name: Verify production health
         env:
-          STAGING_API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+          PRODUCTION_API_BASE_URL: ${{ secrets.PRODUCTION_API_BASE_URL }}
         run: |
-          if [ -z "$STAGING_API_BASE_URL" ]; then
-            echo "Missing required secret: STAGING_API_BASE_URL"
+          if [ -z "$PRODUCTION_API_BASE_URL" ]; then
+            echo "Missing required secret: PRODUCTION_API_BASE_URL"
             exit 1
           fi
           for i in {1..30}; do
-            if curl --fail --silent --show-error "$STAGING_API_BASE_URL/health/ready" >/dev/null; then
-              echo "Staging is healthy."
+            if curl --fail --silent --show-error "$PRODUCTION_API_BASE_URL/health/ready" >/dev/null; then
+              echo "Production is healthy."
               exit 0
             fi
             sleep 10
           done
-          echo "Staging health verification failed."
+          echo "Production health verification failed."
           exit 1

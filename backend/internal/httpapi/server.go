@@ -64,6 +64,7 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 			authRouter.Use(httprate.LimitByIP(10, time.Minute))
 			authRouter.Post("/signup", authHandler.Signup)
 			authRouter.Post("/login", authHandler.Login)
+			authRouter.Post("/google", authHandler.GoogleAuth)
 		})
 
 		r.Route("/requests", func(requestRouter chi.Router) {

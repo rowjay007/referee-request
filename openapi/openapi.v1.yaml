@@ -70,6 +70,28 @@ paths:
           description: Validation error
         "401":
           description: Invalid credentials
+  /api/v1/auth/google:
+    post:
+      operationId: googleAuth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accessToken]
+              properties:
+                accessToken:
+                  type: string
+      responses:
+        "200":
+          description: Google authentication successful
+        "400":
+          description: Validation error
+        "401":
+          description: Invalid access token
+        "503":
+          description: Google auth not configured
   /api/v1/requests:
     get:
       operationId: listCandidateRequests

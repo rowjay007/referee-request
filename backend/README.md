@@ -12,6 +12,7 @@ go run ./cmd/api
 ## Migrations
 
 Migration files are in `migrations/`.
+CI workflows run `migrate up` automatically on `dev` (staging) and `main` (production) before deploy.
 
 ## API base
 
@@ -36,6 +37,10 @@ Migration files are in `migrations/`.
 
 - `POST /api/v1/internal/notifications/reminders`
 - `POST /api/v1/internal/notifications/dispatch`
+
+## Social auth endpoint
+
+- `POST /api/v1/auth/google`
 
 ## Readiness endpoint
 

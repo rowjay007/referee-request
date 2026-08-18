@@ -14,6 +14,8 @@ type Config struct {
 	Port               string
 	BaseURL            string
 	FrontendBaseURL    string
+	SupabaseURL        string
+	SupabaseAnonKey    string
 	DatabaseURL        string
 	JWTSecret          string
 	JWTTTLMin          int
@@ -36,6 +38,8 @@ func Load() (*Config, error) {
 		Port:               getEnv("APP_PORT", "8080"),
 		BaseURL:            getEnv("APP_BASE_URL", "http://localhost:8080"),
 		FrontendBaseURL:    getEnv("FRONTEND_BASE_URL", "http://localhost:3000"),
+		SupabaseURL:        getEnv("SUPABASE_URL", ""),
+		SupabaseAnonKey:    getEnv("SUPABASE_ANON_KEY", ""),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		OTELExporter:       getEnv("OTEL_EXPORTER", "stdout"),

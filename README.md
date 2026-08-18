@@ -84,8 +84,25 @@ Set these GitHub repository secrets for staging automation:
 - `RENDER_STAGING_DEPLOY_HOOK`
 - `STAGING_NOTIFICATION_DISPATCH_TOKEN`
 
+Set these GitHub repository secrets for production automation:
+
+- `PRODUCTION_DATABASE_URL`
+- `PRODUCTION_API_BASE_URL`
+- `RENDER_PRODUCTION_DEPLOY_HOOK`
+
 Set Render environment values:
 
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL` (use `onboarding@resend.dev` for staging tests)
 - `NOTIFICATION_DISPATCH_TOKEN`
+
+Set backend Supabase environment values (for Google auth):
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
+Set frontend environment values:
+
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
