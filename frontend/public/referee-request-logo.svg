@@ -1,0 +1,12 @@
+<svg width="220" height="48" viewBox="0 0 220 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#rr-gradient)"/>
+  <path d="M14 15H27.5C32.1944 15 36 18.8056 36 23.5C36 28.1944 32.1944 32 27.5 32H20.5V26H27.5C28.8807 26 30 24.8807 30 23.5C30 22.1193 28.8807 21 27.5 21H20V35H14V15Z" fill="white"/>
+  <path d="M24 35V15H30V35H24Z" fill="#D9F3FF" fill-opacity="0.8"/>
+  <text x="56" y="30" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700">RefereeRequest</text>
+  <defs>
+    <linearGradient id="rr-gradient" x1="6" y1="6" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+</svg>

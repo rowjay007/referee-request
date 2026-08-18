@@ -43,9 +43,9 @@ export const metadata: Metadata = {
     images: ["/twitter-image"],
   },
   icons: {
-    icon: [{ url: "/favicon.ico" }],
-    shortcut: ["/favicon.ico"],
-    apple: [{ url: "/favicon.ico" }],
+    icon: [{ url: "/icon" }],
+    shortcut: ["/icon"],
+    apple: [{ url: "/apple-icon" }],
   },
 };
 
