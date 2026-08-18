@@ -2,6 +2,7 @@
 set -euo pipefail
 
 API_BASE_URL="${API_BASE_URL:-https://referee-request.onrender.com/api/v1}"
+API_ORIGIN="${API_BASE_URL%/api/v1}"
 RUN_ID="$(date +%s)"
 CANDIDATE_EMAIL="candidate-${RUN_ID}@example.com"
 REFEREE_EMAIL="referee-${RUN_ID}@example.com"
@@ -60,7 +61,11 @@ curl --fail --silent --show-error \
   > "$ref_view_json"
 download_path="$(jq -r '.data.request.documents[0].downloadPath // empty' "$ref_view_json")"
 if [ -n "$download_path" ]; then
-  curl --fail --silent --show-error "${API_BASE_URL}${download_path}" > /dev/null
+  if [[ "$download_path" == /* ]]; then
+    curl --fail --silent --show-error "${API_ORIGIN}${download_path}" > /dev/null
+  else
+    curl --fail --silent --show-error "${API_BASE_URL}/${download_path}" > /dev/null
+  fi
 fi
 
 echo "6) Referee submits reference"
