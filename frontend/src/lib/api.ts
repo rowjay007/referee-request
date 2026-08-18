@@ -6,6 +6,17 @@ type RequestOptions = {
   token?: string;
 };
 
+function buildHeaders(options: RequestOptions): HeadersInit {
+  const headers: Record<string, string> = {};
+  if (options.token) {
+    headers.Authorization = `Bearer ${options.token}`;
+  }
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+  return headers;
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
@@ -16,16 +27,19 @@ export async function apiRequest<T>(
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    headers: buildHeaders(options),
+    body:
+      options.body instanceof FormData
+        ? options.body
+        : options.body
+          ? JSON.stringify(options.body)
+          : undefined,
   });
 
   const payload = await response.json();
   if (!response.ok) {
     throw new Error(payload?.error?.message ?? "API request failed.");
   }
+
   return payload.data as T;
 }

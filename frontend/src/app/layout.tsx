@@ -13,10 +13,40 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const appURL = process.env.NEXT_PUBLIC_APP_URL ?? "https://refereerequest.com";
+
 export const metadata: Metadata = {
-  title: "RefereeRequest",
+  metadataBase: new URL(appURL),
+  title: {
+    default: "RefereeRequest",
+    template: "%s | RefereeRequest",
+  },
   description:
-    "Self-serve reference request platform for candidates and referees.",
+    "Request, track, and receive references without chasing referees manually.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: appURL,
+    siteName: "RefereeRequest",
+    title: "RefereeRequest",
+    description:
+      "Request, track, and receive references without chasing referees manually.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RefereeRequest",
+    description:
+      "Request, track, and receive references without chasing referees manually.",
+    images: ["/twitter-image"],
+  },
+  icons: {
+    icon: [{ url: "/favicon.ico" }],
+    shortcut: ["/favicon.ico"],
+    apple: [{ url: "/favicon.ico" }],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

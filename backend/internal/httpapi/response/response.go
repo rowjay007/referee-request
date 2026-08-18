@@ -41,6 +41,24 @@ func Unauthorized(w http.ResponseWriter, message string) {
 	})
 }
 
+func Forbidden(w http.ResponseWriter, message string) {
+	JSON(w, http.StatusForbidden, Envelope{
+		Error: &APIError{
+			Code:    "FORBIDDEN",
+			Message: message,
+		},
+	})
+}
+
+func NotFound(w http.ResponseWriter, code, message string) {
+	JSON(w, http.StatusNotFound, Envelope{
+		Error: &APIError{
+			Code:    code,
+			Message: message,
+		},
+	})
+}
+
 func Conflict(w http.ResponseWriter, code, message string) {
 	JSON(w, http.StatusConflict, Envelope{
 		Error: &APIError{

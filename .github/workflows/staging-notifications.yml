@@ -1,0 +1,45 @@
+name: staging-notifications
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+    - cron: "5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate required secrets
+        env:
+          STAGING_API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+          DISPATCH_TOKEN: ${{ secrets.STAGING_NOTIFICATION_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$STAGING_API_BASE_URL" ]; then
+            echo "Missing STAGING_API_BASE_URL"
+            exit 1
+          fi
+          if [ -z "$DISPATCH_TOKEN" ]; then
+            echo "Missing STAGING_NOTIFICATION_DISPATCH_TOKEN"
+            exit 1
+          fi
+
+      - name: Queue reminder notifications
+        env:
+          STAGING_API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+          DISPATCH_TOKEN: ${{ secrets.STAGING_NOTIFICATION_DISPATCH_TOKEN }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "X-Dispatch-Token: ${DISPATCH_TOKEN}" \
+            "${STAGING_API_BASE_URL}/api/v1/internal/notifications/reminders"
+
+      - name: Dispatch email notifications
+        env:
+          STAGING_API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+          DISPATCH_TOKEN: ${{ secrets.STAGING_NOTIFICATION_DISPATCH_TOKEN }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "X-Dispatch-Token: ${DISPATCH_TOKEN}" \
+            "${STAGING_API_BASE_URL}/api/v1/internal/notifications/dispatch?limit=50"

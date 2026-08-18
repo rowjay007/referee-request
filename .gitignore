@@ -8,3 +8,5 @@ frontend/out
 backend/bin
 backend/tmp
 coverage
+.vercel
+.env*

@@ -12,6 +12,14 @@ paths:
       responses:
         "200":
           description: API healthy
+  /api/v1/health/ready:
+    get:
+      operationId: getReadiness
+      responses:
+        "200":
+          description: API ready
+        "503":
+          description: Dependency unavailable
   /api/v1/auth/signup:
     post:
       operationId: signup
@@ -62,3 +70,230 @@ paths:
           description: Validation error
         "401":
           description: Invalid credentials
+  /api/v1/auth/google:
+    post:
+      operationId: googleAuth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accessToken]
+              properties:
+                accessToken:
+                  type: string
+      responses:
+        "200":
+          description: Google authentication successful
+        "400":
+          description: Validation error
+        "401":
+          description: Invalid access token
+        "503":
+          description: Google auth not configured
+  /api/v1/requests:
+    get:
+      operationId: listCandidateRequests
+      responses:
+        "200":
+          description: Candidate requests returned
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createCandidateRequest
+      responses:
+        "201":
+          description: Request created
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+  /api/v1/requests/{requestId}:
+    get:
+      operationId: getCandidateRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Request detail returned
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+  /api/v1/requests/{requestId}/send:
+    post:
+      operationId: sendCandidateRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Request sent
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+        "409":
+          description: Already sent
+  /api/v1/requests/{requestId}/documents:
+    get:
+      operationId: listSupportingDocuments
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Document list returned
+        "401":
+          description: Unauthorized
+    post:
+      operationId: uploadSupportingDocument
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Document uploaded
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+  /api/v1/referee/{token}:
+    get:
+      operationId: getRefereeRequest
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Referee request loaded
+        "403":
+          description: Revoked token
+        "404":
+          description: Invalid token
+        "410":
+          description: Expired token
+  /api/v1/referee/{token}/documents/{documentId}:
+    get:
+      operationId: downloadRefereeSupportingDocument
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Document downloaded
+        "404":
+          description: Invalid token or document
+        "410":
+          description: Expired token
+  /api/v1/referee/{token}/submit:
+    post:
+      operationId: submitReferenceByReferee
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                referenceFile:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Reference submitted
+        "400":
+          description: Validation error
+        "403":
+          description: Revoked token
+        "404":
+          description: Invalid token
+        "409":
+          description: Already submitted
+        "410":
+          description: Expired token
+  /api/v1/internal/notifications/reminders:
+    post:
+      operationId: queueDeadlineReminders
+      parameters:
+        - name: X-Dispatch-Token
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reminders queued
+        "401":
+          description: Invalid dispatch token
+  /api/v1/internal/notifications/dispatch:
+    post:
+      operationId: dispatchNotifications
+      parameters:
+        - name: X-Dispatch-Token
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Notifications dispatched
+        "400":
+          description: Validation error
+        "401":
+          description: Invalid dispatch token

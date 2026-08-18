@@ -41,9 +41,15 @@ func main() {
 	}
 	defer dbPool.Close()
 
+	handler, err := httpapi.NewServer(cfg, logger, dbPool)
+	if err != nil {
+		logger.Error("server setup failed", "error", err)
+		os.Exit(1)
+	}
+
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpapi.NewServer(cfg, logger, dbPool),
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
