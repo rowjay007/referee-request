@@ -33,13 +33,23 @@ jobs:
 
       - name: Trigger Render production deploy
         env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.PRODUCTION_RENDER_SERVICE_ID }}
           DEPLOY_HOOK: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}
         run: |
+          if [ -n "$RENDER_API_KEY" ] && [ -n "$RENDER_SERVICE_ID" ]; then
+            curl --fail --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer $RENDER_API_KEY" \
+              "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" >/dev/null
+            exit 0
+          fi
+
           if [ -z "$DEPLOY_HOOK" ]; then
-            echo "Missing required secret: RENDER_PRODUCTION_DEPLOY_HOOK"
+            echo "Missing required secret(s): either RENDER_API_KEY+PRODUCTION_RENDER_SERVICE_ID or RENDER_PRODUCTION_DEPLOY_HOOK"
             exit 1
           fi
-          curl --fail --silent --show-error --request POST "$DEPLOY_HOOK"
+          curl --fail --silent --show-error --request POST "$DEPLOY_HOOK" >/dev/null
 
       - name: Verify production health
         env:
@@ -50,7 +60,7 @@ jobs:
             exit 1
           fi
           for i in {1..30}; do
-            if curl --fail --silent --show-error "$PRODUCTION_API_BASE_URL/health/ready" >/dev/null; then
+            if curl --fail --silent --show-error "$PRODUCTION_API_BASE_URL/api/v1/health/ready" >/dev/null; then
               echo "Production is healthy."
               exit 0
             fi

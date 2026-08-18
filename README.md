@@ -81,13 +81,22 @@ Set these GitHub repository secrets for staging automation:
 - `STAGING_SUPABASE_SERVICE_ROLE_KEY`
 - `STAGING_SUPABASE_PROJECT_ID`
 - `STAGING_API_BASE_URL`
-- `RENDER_STAGING_DEPLOY_HOOK`
+- `STAGING_RENDER_SERVICE_ID`
 - `STAGING_NOTIFICATION_DISPATCH_TOKEN`
 
 Set these GitHub repository secrets for production automation:
 
 - `PRODUCTION_DATABASE_URL`
 - `PRODUCTION_API_BASE_URL`
+- `PRODUCTION_RENDER_SERVICE_ID`
+
+Set shared Render automation secret:
+
+- `RENDER_API_KEY`
+
+Optional fallback (if not using API-triggered deploys):
+
+- `RENDER_STAGING_DEPLOY_HOOK`
 - `RENDER_PRODUCTION_DEPLOY_HOOK`
 
 Set Render environment values:
