@@ -86,6 +86,19 @@ textarea:focus {
   background: color-mix(in srgb, var(--surface) 88%, var(--primary) 12%);
 }
 
+.rr-tilt-3d {
+  transform-style: preserve-3d;
+  transition:
+    transform 260ms ease,
+    box-shadow 260ms ease,
+    border-color 260ms ease;
+}
+
+.rr-tilt-3d:hover {
+  transform: perspective(920px) rotateX(4deg) rotateY(-4deg) translateY(-4px);
+  box-shadow: 0 22px 34px -24px rgba(24, 20, 38, 0.44);
+}
+
 @keyframes rr-float {
   0%,
   100% {
@@ -170,7 +183,11 @@ textarea:focus {
   .rr-motion-rise,
   .rr-motion-float,
   .rr-motion-pulse-ring,
-  .rr-note-card.rr-motion-note {
+  .rr-note-card.rr-motion-note,
+  .rr-tilt-3d,
+  .rr-tilt-3d:hover {
     animation: none !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
