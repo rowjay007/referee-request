@@ -1,12 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
 import { saveAuthToken } from "@/lib/auth";
-import { getSupabaseClient } from "@/lib/supabase";
 
 type SignupResponse = {
   user: { id: string; email: string; fullName: string };
@@ -21,7 +21,6 @@ export default function SignupPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,28 +42,6 @@ export default function SignupPage() {
       setError(err instanceof Error ? err.message : "Signup failed.");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleGoogleSignUp() {
-    setGoogleLoading(true);
-    setError("");
-    try {
-      posthog.capture("google_auth_started");
-      const supabase = getSupabaseClient();
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const { error: authError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-        },
-      });
-      if (authError) {
-        throw authError;
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign up failed.");
-      setGoogleLoading(false);
     }
   }
 
@@ -106,15 +83,13 @@ export default function SignupPage() {
           {loading ? "Creating account..." : "Create account"}
         </Button>
       </form>
-      <Button
-        type="button"
-        variant="secondary"
-        disabled={googleLoading}
-        onClick={handleGoogleSignUp}
-        className="w-full"
-      >
-        {googleLoading ? "Redirecting to Google..." : "Continue with Google"}
-      </Button>
+      <p className="text-sm text-muted">
+        Already have an account?{" "}
+        <Link href="/signin" className="text-primary underline">
+          Sign in
+        </Link>
+        .
+      </p>
       {message ? <p className="text-sm text-success">{message}</p> : null}
       {error ? <p className="text-sm text-error">{error}</p> : null}
     </main>
