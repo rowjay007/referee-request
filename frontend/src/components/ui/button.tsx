@@ -9,9 +9,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-white shadow-sm shadow-primary/30 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 active:translate-y-0",
+          "bg-gradient-to-r from-primary to-tertiary text-white shadow-sm shadow-primary/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 active:translate-y-0",
         secondary:
-          "border border-border bg-surface text-foreground shadow-sm hover:-translate-y-0.5 hover:bg-slate-100 hover:shadow-md active:translate-y-0",
+          "border border-border bg-white/90 text-foreground shadow-sm hover:-translate-y-0.5 hover:bg-white hover:shadow-md active:translate-y-0",
       },
       size: {
         default: "h-10 px-4 py-2",

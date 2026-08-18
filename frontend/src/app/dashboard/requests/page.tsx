@@ -34,28 +34,40 @@ export default function RequestsDashboardPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10 sm:px-10">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">
-            Reference requests
-          </h1>
-          <p className="text-sm text-muted">
-            Track every reference request without chasing manually.
-          </p>
+      <div className="rounded-2xl border border-border bg-surface/90 p-6 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Reference requests
+            </h1>
+            <p className="text-sm text-muted">
+              Track every reference request without chasing manually.
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/dashboard/requests/new">Create request</Link>
+          </Button>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/requests/new">Create request</Link>
-        </Button>
       </div>
 
       {!token ? (
-        <p className="text-sm text-error">Please sign in to view requests.</p>
+        <p className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error">
+          Please sign in to view requests.
+        </p>
       ) : null}
-      {loading ? <p className="text-sm text-muted">Loading requests...</p> : null}
-      {error ? <p className="text-sm text-error">{error}</p> : null}
+      {loading ? (
+        <p className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-muted">
+          Loading requests...
+        </p>
+      ) : null}
+      {error ? (
+        <p className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error">
+          {error}
+        </p>
+      ) : null}
 
       {!loading && !error && requests.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="rounded-2xl border border-border bg-surface p-6">
           <p className="text-sm text-muted">
             No requests yet. Create your first request to get started.
           </p>
@@ -66,7 +78,7 @@ export default function RequestsDashboardPage() {
         {requests.map((request) => (
           <article
             key={request.id}
-            className="rounded-lg border border-border bg-surface p-5"
+            className="rounded-2xl border border-border bg-surface p-5 shadow-sm"
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
