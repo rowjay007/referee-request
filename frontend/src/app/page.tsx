@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import type { ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   BellRing,
@@ -14,40 +17,58 @@ import {
   GraduationCap,
   Handshake,
   Link2,
-  LockKeyhole,
   MailCheck,
   MessageCircleOff,
   Shield,
   Send,
   Sparkles,
-  Timer,
-  UploadCloud,
   UserCheck2,
   UserRoundSearch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+type ToastState = {
+  message: string;
+  type: "info" | "success";
+} | null;
+
 export default function Home() {
+  const router = useRouter();
+  const [toast, setToast] = useState<ToastState>(null);
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+    const timer = window.setTimeout(() => setToast(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  function navigateWithToast(path: string, message: string, type: "info" | "success") {
+    setToast({ message, type });
+    window.setTimeout(() => router.push(path), 260);
+  }
+
   return (
     <main className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-background to-slate-100">
       <div className="pointer-events-none absolute -left-40 top-0 h-[28rem] w-[28rem] rounded-full bg-primary/15 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 top-24 h-80 w-80 rounded-full bg-secondary/15 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-tertiary/10 blur-3xl" />
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col px-6 pb-16 pt-6 sm:px-10">
-        <header className="sticky top-0 z-30 mb-8 flex items-center justify-between rounded-xl border border-border/80 bg-surface/85 px-4 py-3 shadow-sm backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-6xl flex-col px-4 pb-14 pt-4 sm:px-8 sm:pb-16 sm:pt-6">
+        <header className="sticky top-0 z-30 mb-8 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-surface/85 px-4 py-3 shadow-sm backdrop-blur-md sm:flex-nowrap">
           <div className="inline-flex items-center gap-2.5">
             <Image
               src="/referee-request-logo.svg"
               alt="RefereeRequest"
-              width={160}
-              height={35}
+              width={176}
+              height={36}
               priority
             />
           </div>
           <div className="hidden items-center gap-5 text-sm text-muted md:flex">
             <a href="#how-it-works" className="transition-colors hover:text-foreground">
-              How it works
+              The method
             </a>
             <a href="#why" className="transition-colors hover:text-foreground">
               Why it works
@@ -56,12 +77,19 @@ export default function Home() {
               FAQ
             </a>
           </div>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="secondary">
-              <Link href="/signin">Sign in</Link>
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <Button
+              variant="secondary"
+              className="flex-1 sm:flex-none"
+              onClick={() => navigateWithToast("/signin", "Opening sign in...", "info")}
+            >
+              Sign in
             </Button>
-            <Button asChild>
-              <Link href="/signup">Get started</Link>
+            <Button
+              className="flex-1 sm:flex-none"
+              onClick={() => navigateWithToast("/signup", "Starting your first request...", "success")}
+            >
+              Start free
             </Button>
           </div>
         </header>
@@ -70,84 +98,65 @@ export default function Home() {
           <div className="space-y-6">
             <p className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <Sparkles className="h-4 w-4" />
-              Built for ambitious applicants and busy referees
+              Reference requests that move forward
             </p>
             <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-              Stop chasing referees. Get references submitted with confidence.
+              Make the ask.
+              <span className="block bg-gradient-to-r from-primary to-tertiary bg-clip-text text-transparent">
+                Lose the chase.
+              </span>
             </h1>
             <p className="max-w-2xl text-lg leading-relaxed text-muted">
               RefereeRequest replaces scattered chats and email threads with one
               clear, secure workflow from request creation to final submission.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg">
-                <Link href="/signup" className="inline-flex items-center gap-2">
+              <Button
+                size="lg"
+                onClick={() => navigateWithToast("/signup", "Redirecting to Google sign up...", "success")}
+              >
+                <span className="inline-flex items-center gap-2">
                   Create your first request
                   <ArrowRight className="h-4 w-4" />
-                </Link>
+                </span>
               </Button>
-              <Button asChild size="lg" variant="secondary">
-                <Link href="/dashboard/requests/new">Build your first request</Link>
+              <Button
+                size="lg"
+                variant="secondary"
+                onClick={() => navigateWithToast("/dashboard/requests/new", "Opening request builder...", "info")}
+              >
+                Build your first request
               </Button>
             </div>
             <p className="text-sm font-medium text-muted">
               No referee account required · No payment required to start
             </p>
             <div className="grid gap-3 pt-2 text-sm text-foreground sm:grid-cols-2">
-              <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm">
+              <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm transition-transform duration-300 hover:-translate-y-0.5">
                 <CheckCircle2 className="h-4 w-4 text-secondary" />
                 No referee account required
               </p>
-              <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm">
+              <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm transition-transform duration-300 hover:-translate-y-0.5">
                 <CheckCircle2 className="h-4 w-4 text-secondary" />
                 Secure, expiring links
               </p>
-              <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm">
+              <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm transition-transform duration-300 hover:-translate-y-0.5">
                 <CheckCircle2 className="h-4 w-4 text-secondary" />
                 Status visibility at every step
               </p>
-              <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm">
+              <p className="inline-flex items-center gap-2 rounded-md bg-surface/90 px-2.5 py-1.5 shadow-sm transition-transform duration-300 hover:-translate-y-0.5">
                 <CheckCircle2 className="h-4 w-4 text-secondary" />
                 Designed for mobile submission
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-border bg-surface/95 p-3 shadow-sm">
-                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
-                  <Timer className="h-3.5 w-3.5 text-primary" />
-                  Speed
-                </p>
-                <p className="mt-1 text-sm font-medium text-foreground">
-                  Typical request setup in minutes
-                </p>
-              </div>
-              <div className="rounded-lg border border-border bg-surface/95 p-3 shadow-sm">
-                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
-                  <LockKeyhole className="h-3.5 w-3.5 text-secondary" />
-                  Security
-                </p>
-                <p className="mt-1 text-sm font-medium text-foreground">
-                  Expiring links with scoped access
-                </p>
-              </div>
-              <div className="rounded-lg border border-border bg-surface/95 p-3 shadow-sm">
-                <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
-                  <UploadCloud className="h-3.5 w-3.5 text-tertiary" />
-                  Simplicity
-                </p>
-                <p className="mt-1 text-sm font-medium text-foreground">
-                  One upload path for supporting files
-                </p>
-              </div>
-            </div>
           </div>
 
-          <article className="relative overflow-hidden rounded-2xl border border-border bg-surface p-6 shadow-lg shadow-slate-300/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+          <article className="rr-card-tilt relative overflow-hidden rounded-2xl border border-border bg-surface p-6 shadow-xl shadow-slate-300/30 transition-all duration-300">
             <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-tertiary" />
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-foreground">Request timeline</h2>
-              <span className="rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-medium text-secondary">
-                In progress
+              <h2 className="text-base font-semibold text-foreground">Live request / 024</h2>
+              <span className="rr-float rounded-full border border-tertiary/30 bg-tertiary/10 px-2.5 py-1 text-xs font-medium text-tertiary">
+                Moving
               </span>
             </div>
             <div className="space-y-3">
@@ -156,7 +165,7 @@ export default function Home() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Request sent</p>
                   <p className="text-xs text-muted">
-                    Complete details delivered to Prof. Okafor.
+                    Complete details delivered to Dr. Amelia Hart.
                   </p>
                 </div>
               </div>
@@ -189,8 +198,23 @@ export default function Home() {
           </article>
         </section>
 
+        <section className="relative mb-12 overflow-hidden rounded-xl border border-border/60 bg-white/70 py-3">
+          <div className="rr-marquee-track flex min-w-max items-center gap-8 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+            <span>One request</span>
+            <span>Secure link</span>
+            <span>Referee opens</span>
+            <span>Status updates</span>
+            <span>Reference submitted</span>
+            <span>One request</span>
+            <span>Secure link</span>
+            <span>Referee opens</span>
+            <span>Status updates</span>
+            <span>Reference submitted</span>
+          </div>
+        </section>
+
         <section id="why" className="grid gap-4 pb-12 md:grid-cols-3">
-          <article className="group rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <article className="rr-hover-lift group rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="mb-3 inline-flex rounded-lg bg-secondary/12 p-2 text-secondary">
               <UserRoundSearch className="h-5 w-5" />
             </div>
@@ -200,7 +224,7 @@ export default function Home() {
               instead of repeating details across channels.
             </p>
           </article>
-          <article className="group rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <article className="rr-hover-lift group rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="mb-3 inline-flex rounded-lg bg-primary/12 p-2 text-primary">
               <MessageCircleOff className="h-5 w-5" />
             </div>
@@ -210,7 +234,7 @@ export default function Home() {
               submitted so you follow up with confidence.
             </p>
           </article>
-          <article className="group rounded-xl border border-border bg-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+          <article className="rr-hover-lift group rounded-xl border border-border bg-surface p-5 shadow-sm">
             <div className="mb-3 inline-flex rounded-lg bg-tertiary/18 p-2 text-tertiary">
               <Handshake className="h-5 w-5" />
             </div>
@@ -291,46 +315,30 @@ export default function Home() {
             </div>
           </div>
           <div className="flex flex-col gap-3">
-            <Button asChild size="lg">
-              <Link href="/signup" className="inline-flex items-center gap-2">
+            <Button
+              size="lg"
+              onClick={() => navigateWithToast("/signup", "Starting your request...", "success")}
+            >
+              <span className="inline-flex items-center gap-2">
                 Start free today
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </span>
             </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/signin" className="inline-flex items-center gap-2">
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={() => navigateWithToast("/signin", "Opening sign in...", "info")}
+            >
+              <span className="inline-flex items-center gap-2">
                 I already have an account
                 <ChevronRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </section>
-
-        <section className="mt-8 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary to-secondary p-7 text-white shadow-lg shadow-primary/20">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/80">
-                <Sparkles className="h-4 w-4" />
-                Ready to stop follow-up fatigue?
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                Launch your first request now and track every step to submission.
-              </h2>
-              <p className="mt-2 text-sm text-white/85">
-                Purpose, deadline, and documents in one place for every referee.
-              </p>
-            </div>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/signup" className="inline-flex items-center gap-2">
-                Start free
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              </span>
             </Button>
           </div>
         </section>
 
         <section id="faq" className="mt-12 grid gap-4 md:grid-cols-3">
-          <article className="rounded-xl border border-border bg-surface p-5">
+          <article className="rr-hover-lift rounded-xl border border-border bg-surface p-5">
             <p className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
               <GraduationCap className="h-4 w-4 text-primary" />
               Do referees need accounts?
@@ -339,7 +347,7 @@ export default function Home() {
               No. They open a secure link and submit directly.
             </p>
           </article>
-          <article className="rounded-xl border border-border bg-surface p-5">
+          <article className="rr-hover-lift rounded-xl border border-border bg-surface p-5">
             <p className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
               <Globe2 className="h-4 w-4 text-secondary" />
               Is this only for universities?
@@ -348,17 +356,87 @@ export default function Home() {
               No. It supports scholarships, fellowships, jobs, and internships.
             </p>
           </article>
-          <article className="rounded-xl border border-border bg-surface p-5">
+          <article className="rr-hover-lift rounded-xl border border-border bg-surface p-5">
             <p className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
               <Shield className="h-4 w-4 text-tertiary" />
-              Is the process secure?
+              Are files protected?
             </p>
             <p className="text-sm text-muted">
               Yes. Links are tokenized and scoped to the request context.
             </p>
           </article>
         </section>
+
+        <footer className="mt-14 rounded-2xl border border-border bg-surface px-5 py-8 shadow-sm sm:px-6 sm:py-10">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Image
+                src="/referee-request-logo.svg"
+                alt="RefereeRequest"
+                width={160}
+                height={34}
+              />
+              <p className="mt-3 text-sm text-muted">
+                References, without the chasing.
+              </p>
+              <p className="mt-2 text-xs text-muted">Built for applicants and busy referees.</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Product</p>
+              <div className="mt-3 space-y-2 text-sm text-muted">
+                <a href="#how-it-works" className="block transition-colors hover:text-foreground">
+                  The method
+                </a>
+                <a href="#why" className="block transition-colors hover:text-foreground">
+                  Why it works
+                </a>
+                <a href="#faq" className="block transition-colors hover:text-foreground">
+                  FAQ
+                </a>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Access</p>
+              <div className="mt-3 space-y-2 text-sm text-muted">
+                <Link href="/signin" className="block transition-colors hover:text-foreground">
+                  Google sign in
+                </Link>
+                <Link href="/signup" className="block transition-colors hover:text-foreground">
+                  Google sign up
+                </Link>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Support</p>
+              <div className="mt-3 space-y-2 text-sm text-muted">
+                <p>For support and product help</p>
+                <a className="block transition-colors hover:text-foreground" href="mailto:hello@refereerequest.com">
+                  hello@refereerequest.com
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="mt-7 flex flex-col gap-2 border-t border-border pt-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+            <p>© {new Date().getFullYear()} RefereeRequest. All rights reserved.</p>
+            <div className="inline-flex items-center gap-2">
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-secondary" />
+              Platform status: live
+            </div>
+          </div>
+        </footer>
       </div>
+
+      {toast ? (
+        <div
+          className={`rr-toast fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] rounded-xl border px-4 py-3 text-sm text-white shadow-xl transition-all duration-300 sm:bottom-5 sm:right-5 ${
+            toast.type === "success"
+              ? "border-secondary/40 bg-secondary"
+              : "border-primary/40 bg-primary"
+          }`}
+        >
+          {toast.message}
+        </div>
+      ) : null}
     </main>
   );
 }
