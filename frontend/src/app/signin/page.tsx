@@ -6,8 +6,6 @@ import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
-
 export default function SigninPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,7 +17,7 @@ export default function SigninPage() {
     try {
       posthog.capture("google_auth_started");
       const supabase = getSupabaseClient();
-      const redirectTo = `${(APP_URL ?? window.location.origin).replace(/\/$/, "")}/auth/callback`;
+      const redirectTo = `${window.location.origin.replace(/\/$/, "")}/auth/callback`;
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },
