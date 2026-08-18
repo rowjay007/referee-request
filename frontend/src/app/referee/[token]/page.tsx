@@ -196,6 +196,7 @@ export default function RefereePage() {
                 <a
                   className="text-sm font-medium text-primary underline underline-offset-2"
                   href={`${API_BASE_URL}${document.downloadPath}`}
+                  onClick={() => posthog.capture("referee_documents_viewed")}
                 >
                   Download
                 </a>

@@ -173,6 +173,11 @@ func (h *ReferenceRequestHandler) Send(w http.ResponseWriter, r *http.Request) {
 
 	tokenHash := security.HashRefereeToken(token)
 	expiresAt := time.Now().UTC().Add(30 * 24 * time.Hour)
+	refereeLink, err := url.JoinPath(h.cfg.FrontendBaseURL, "referee", token)
+	if err != nil {
+		response.InternalError(w)
+		return
+	}
 
 	request, invitation, err := h.requests.SendReferenceRequestWithInvitation(
 		r.Context(),
@@ -180,6 +185,7 @@ func (h *ReferenceRequestHandler) Send(w http.ResponseWriter, r *http.Request) {
 		userID,
 		tokenHash,
 		expiresAt,
+		refereeLink,
 	)
 	if err != nil {
 		switch err {
@@ -190,12 +196,6 @@ func (h *ReferenceRequestHandler) Send(w http.ResponseWriter, r *http.Request) {
 		default:
 			response.InternalError(w)
 		}
-		return
-	}
-
-	refereeLink, err := url.JoinPath(h.cfg.FrontendBaseURL, "referee", token)
-	if err != nil {
-		response.InternalError(w)
 		return
 	}
 

@@ -63,3 +63,23 @@ CREATE TABLE submitted_references (
     size_bytes BIGINT NOT NULL,
     submitted_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE TABLE notification_outbox (
+    id UUID PRIMARY KEY,
+    reference_request_id UUID REFERENCES reference_requests(id),
+    notification_type TEXT NOT NULL,
+    channel TEXT NOT NULL,
+    recipient_email TEXT NOT NULL,
+    recipient_name TEXT,
+    subject TEXT NOT NULL,
+    html_body TEXT NOT NULL,
+    status TEXT NOT NULL,
+    attempt_count INTEGER NOT NULL,
+    max_attempts INTEGER NOT NULL,
+    available_at TIMESTAMPTZ NOT NULL,
+    provider_message_id TEXT,
+    last_error TEXT,
+    sent_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);

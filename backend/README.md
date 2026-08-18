@@ -31,3 +31,8 @@ Migration files are in `migrations/`.
 - `GET /api/v1/referee/{token}`
 - `GET /api/v1/referee/{token}/documents/{documentId}`
 - `POST /api/v1/referee/{token}/submit`
+
+## Internal notification endpoints
+
+- `POST /api/v1/internal/notifications/reminders`
+- `POST /api/v1/internal/notifications/dispatch`

@@ -56,6 +56,11 @@ cd backend && go test ./...
 - `GET /api/v1/referee/{token}/documents/{documentId}`
 - `POST /api/v1/referee/{token}/submit`
 
+## Phase 4 notification endpoints
+
+- `POST /api/v1/internal/notifications/reminders`
+- `POST /api/v1/internal/notifications/dispatch`
+
 ## Environment model
 
 - `dev` branch deploys to staging infrastructure and staging Supabase
@@ -73,3 +78,4 @@ Set these GitHub repository secrets for staging automation:
 - `STAGING_SUPABASE_PROJECT_ID`
 - `STAGING_API_BASE_URL`
 - `RENDER_STAGING_DEPLOY_HOOK`
+- `STAGING_NOTIFICATION_DISPATCH_TOKEN`

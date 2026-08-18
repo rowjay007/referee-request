@@ -99,6 +99,7 @@ export default function NewRequestPage() {
 
       posthog.capture("request_created");
       posthog.capture("request_sent");
+      posthog.capture("email_invitation_sent");
       setMessage("Request created and sent successfully.");
       setRefereeLink(sent.refereeLink);
       setTokenExpires(sent.tokenExpires);

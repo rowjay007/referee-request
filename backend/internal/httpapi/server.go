@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -13,12 +14,13 @@ import (
 	"github.com/rowjay007/referee-request/backend/internal/config"
 	"github.com/rowjay007/referee-request/backend/internal/httpapi/handlers"
 	authmiddleware "github.com/rowjay007/referee-request/backend/internal/httpapi/middleware"
+	"github.com/rowjay007/referee-request/backend/internal/notification"
 	"github.com/rowjay007/referee-request/backend/internal/storage"
 	"github.com/rowjay007/referee-request/backend/internal/store"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) http.Handler {
+func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.Handler, error) {
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
@@ -36,10 +38,19 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) http.H
 	userStore := store.NewUserStore(db)
 	requestStore := store.NewReferenceRequestStore(db)
 	documentStorage := storage.NewLocalStore(cfg.StorageLocalRoot)
+	notificationSender := notification.NewResendSender(cfg.ResendAPIKey)
+	notificationService, err := notification.NewService(logger, requestStore, notificationSender, cfg.ResendFromEmail)
+	if err != nil {
+		return nil, err
+	}
 	authHandler := handlers.NewAuthHandler(cfg, userStore)
 	requestHandler := handlers.NewReferenceRequestHandler(cfg, requestStore)
 	documentHandler := handlers.NewDocumentHandler(cfg, requestStore, documentStorage)
 	refereeHandler := handlers.NewRefereeHandler(cfg, requestStore, documentStorage)
+	notificationHandler := handlers.NewNotificationHandler(cfg, notificationService)
+	if cfg.DispatchToken == "" {
+		return nil, errors.New("NOTIFICATION_DISPATCH_TOKEN is required")
+	}
 
 	router.Get("/health", handlers.Health)
 
@@ -69,9 +80,15 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) http.H
 			refereeRouter.Get("/{token}/documents/{documentId}", refereeHandler.DownloadDocument)
 			refereeRouter.Post("/{token}/submit", refereeHandler.SubmitReference)
 		})
+
+		r.Route("/internal/notifications", func(notificationRouter chi.Router) {
+			notificationRouter.Use(httprate.LimitByIP(20, time.Minute))
+			notificationRouter.Post("/dispatch", notificationHandler.Dispatch)
+			notificationRouter.Post("/reminders", notificationHandler.QueueReminders)
+		})
 	})
 
-	return otelhttp.NewHandler(router, "http.server")
+	return otelhttp.NewHandler(router, "http.server"), nil
 }
 
 func requestLogMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {

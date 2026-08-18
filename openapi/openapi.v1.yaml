@@ -230,3 +230,29 @@ paths:
           description: Already submitted
         "410":
           description: Expired token
+  /api/v1/internal/notifications/reminders:
+    post:
+      operationId: queueDeadlineReminders
+      responses:
+        "200":
+          description: Reminders queued
+        "401":
+          description: Invalid dispatch token
+  /api/v1/internal/notifications/dispatch:
+    post:
+      operationId: dispatchNotifications
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Notifications dispatched
+        "400":
+          description: Validation error
+        "401":
+          description: Invalid dispatch token

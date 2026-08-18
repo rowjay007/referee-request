@@ -22,6 +22,10 @@ type Config struct {
 	StorageProvider    string
 	StorageLocalRoot   string
 	UploadMaxBytes     int64
+	ResendAPIKey       string
+	ResendFromEmail    string
+	ReminderLeadHours  int
+	DispatchToken      string
 }
 
 func Load() (*Config, error) {
@@ -38,6 +42,9 @@ func Load() (*Config, error) {
 		CORSAllowedOrigins: splitCSV(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")),
 		StorageProvider:    getEnv("STORAGE_PROVIDER", "local"),
 		StorageLocalRoot:   getEnv("STORAGE_LOCAL_ROOT", "./tmp/storage"),
+		ResendAPIKey:       getEnv("RESEND_API_KEY", ""),
+		ResendFromEmail:    getEnv("RESEND_FROM_EMAIL", ""),
+		DispatchToken:      getEnv("NOTIFICATION_DISPATCH_TOKEN", "dev-notification-dispatch-token"),
 	}
 
 	ttl := getEnv("JWT_TTL_MINUTES", "60")
@@ -53,6 +60,13 @@ func Load() (*Config, error) {
 		return nil, errors.New("UPLOAD_MAX_BYTES must be a positive integer")
 	}
 	cfg.UploadMaxBytes = uploadMaxBytes
+
+	reminderLeadHours := getEnv("REMINDER_LEAD_HOURS", "72")
+	leadHours, err := strconv.Atoi(reminderLeadHours)
+	if err != nil || leadHours <= 0 {
+		return nil, errors.New("REMINDER_LEAD_HOURS must be a positive integer")
+	}
+	cfg.ReminderLeadHours = leadHours
 
 	if cfg.DatabaseURL == "" {
 		return nil, errors.New("DATABASE_URL is required")

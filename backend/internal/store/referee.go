@@ -76,6 +76,7 @@ func (s *ReferenceRequestStore) SendReferenceRequestWithInvitation(
 	candidateUserID uuid.UUID,
 	tokenHash string,
 	expiresAt time.Time,
+	refereeLink string,
 ) (*ReferenceRequest, *RefereeInvitation, error) {
 	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
@@ -146,6 +147,44 @@ func (s *ReferenceRequestStore) SendReferenceRequestWithInvitation(
 	)
 	if eventErr != nil {
 		return nil, nil, eventErr
+	}
+
+	var candidateName string
+	candidateErr := tx.QueryRow(
+		ctx,
+		`SELECT full_name FROM users WHERE id = $1 LIMIT 1`,
+		candidateUserID,
+	).Scan(&candidateName)
+	if candidateErr != nil {
+		return nil, nil, candidateErr
+	}
+
+	subject := "Reference request from " + candidateName
+	htmlBody := "<div style=\"font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;\">" +
+		"<h2 style=\"margin:0 0 12px;\">Reference request invitation</h2>" +
+		"<p>Hello " + request.RefereeName + ",</p>" +
+		"<p>" + candidateName + " is requesting your reference.</p>" +
+		"<p><strong>Institution/Company:</strong> " + request.InstitutionName + "<br />" +
+		"<strong>Programme/Role:</strong> " + request.ProgrammeName + "<br />" +
+		"<strong>Deadline:</strong> " + request.DeadlineAt.UTC().Format("2006-01-02 15:04 UTC") + "</p>" +
+		"<p>Please use this secure link to complete the request:</p>" +
+		"<p><a href=\"" + refereeLink + "\">" + refereeLink + "</a></p>" +
+		"<p>Thank you.</p>" +
+		"</div>"
+
+	_, queueErr := tx.Exec(
+		ctx,
+		`INSERT INTO notification_outbox (
+		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
+		 ) VALUES ($1, 'invitation_email', 'email', $2, $3, $4, $5, 'queued', 0, 5, NOW())`,
+		request.ID,
+		request.RefereeEmail,
+		request.RefereeName,
+		subject,
+		htmlBody,
+	)
+	if queueErr != nil {
+		return nil, nil, queueErr
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -444,6 +483,31 @@ func (s *ReferenceRequestStore) SubmitReferenceByTokenHash(ctx context.Context, 
 		 VALUES ($1, 'reference_submitted', NULL, jsonb_build_object('submitted_reference_id', $2::text))`,
 		invitation.ReferenceRequestID,
 		submitted.ID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	subject := "Reference submitted by " + invitation.RefereeName
+	htmlBody := "<div style=\"font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;\">" +
+		"<h2 style=\"margin:0 0 12px;\">Reference submitted</h2>" +
+		"<p>Hello " + invitation.CandidateName + ",</p>" +
+		"<p>Your referee, <strong>" + invitation.RefereeName + "</strong>, has submitted the reference.</p>" +
+		"<p><strong>Institution/Company:</strong> " + invitation.InstitutionName + "<br />" +
+		"<strong>Programme/Role:</strong> " + invitation.ProgrammeName + "</p>" +
+		"<p>You can view this request from your dashboard.</p>" +
+		"</div>"
+
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO notification_outbox (
+		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
+		 ) VALUES ($1, 'submission_notification', 'email', $2, $3, $4, $5, 'queued', 0, 5, NOW())`,
+		invitation.ReferenceRequestID,
+		invitation.CandidateEmail,
+		invitation.CandidateName,
+		subject,
+		htmlBody,
 	)
 	if err != nil {
 		return nil, err
