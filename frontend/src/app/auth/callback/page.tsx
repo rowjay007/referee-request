@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
@@ -70,18 +71,28 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 px-6 py-10">
-      <h1 className="text-2xl font-semibold text-foreground">Google sign in</h1>
-      {!error ? <p className="text-sm text-muted">{status}</p> : null}
-      {error ? (
-        <p className="text-sm text-error">
-          {error}{" "}
-          <Link href="/signin" className="underline">
-            Try again
-          </Link>
-          .
-        </p>
-      ) : null}
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-6 px-6 py-10">
+      <article className="space-y-5 rounded-2xl border border-border bg-surface/95 p-7 text-center shadow-lg shadow-primary/10 backdrop-blur">
+        <Image
+          src="/referee-request-logo.svg"
+          alt="RefereeRequest"
+          width={180}
+          height={40}
+          className="mx-auto"
+          priority
+        />
+        <h1 className="text-2xl font-semibold text-foreground">Google sign in</h1>
+        {!error ? <p className="text-sm text-muted">{status}</p> : null}
+        {error ? (
+          <p className="text-sm text-error">
+            {error}{" "}
+            <Link href="/signin" className="font-medium underline">
+              Try again
+            </Link>
+            .
+          </p>
+        ) : null}
+      </article>
     </main>
   );
 }

@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
+  --background: #f4f7ff;
   --surface: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --primary: #164e63;
+  --text: #0b1220;
+  --muted: #5b6a85;
+  --border: #dbe5ff;
+  --primary: #1d4ed8;
   --secondary: #0f766e;
-  --tertiary: #f59e0b;
+  --tertiary: #7c3aed;
   --error: #dc2626;
-  --success: #16a34a;
+  --success: #15803d;
 }
 
 @theme inline {
@@ -29,7 +29,27 @@
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1200px 480px at 15% -10%, rgba(37, 99, 235, 0.16), transparent 65%),
+    radial-gradient(900px 420px at 90% -20%, rgba(124, 58, 237, 0.12), transparent 65%),
+    var(--background);
   color: var(--text);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+input,
+select,
+textarea {
+  background: #fff;
+  border-color: var(--border);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: color-mix(in srgb, var(--primary) 75%, #fff 25%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
 }

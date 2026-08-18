@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
@@ -32,21 +33,40 @@ export default function SigninPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-6 py-10">
-      <h1 className="text-2xl font-semibold text-foreground">Sign in with Google</h1>
-      <div className="space-y-4 rounded-lg border border-border bg-surface p-6">
-        <Button disabled={loading} className="w-full" onClick={handleGoogleSignIn}>
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-6 px-6 py-10">
+      <article className="space-y-6 rounded-2xl border border-border bg-surface/95 p-7 shadow-lg shadow-primary/10 backdrop-blur">
+        <div className="space-y-4 text-center">
+          <Image
+            src="/referee-request-logo.svg"
+            alt="RefereeRequest"
+            width={180}
+            height={40}
+            className="mx-auto"
+            priority
+          />
+          <h1 className="text-2xl font-semibold text-foreground">Sign in with Google</h1>
+          <p className="text-sm text-muted">
+            One tap sign in, then create and track reference requests.
+          </p>
+        </div>
+        <Button
+          disabled={loading}
+          className="h-11 w-full text-sm"
+          onClick={handleGoogleSignIn}
+        >
           {loading ? "Redirecting to Google..." : "Continue with Google"}
         </Button>
+        {error ? <p className="text-center text-sm text-error">{error}</p> : null}
+      </article>
+      <div className="text-center">
+        <p className="text-sm text-muted">
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className="font-medium text-primary underline">
+            Create one
+          </Link>
+          .
+        </p>
       </div>
-      <p className="text-sm text-muted">
-        Don&apos;t have an account?{" "}
-        <Link href="/signup" className="text-primary underline">
-          Create one
-        </Link>
-        .
-      </p>
-      {error ? <p className="text-sm text-error">{error}</p> : null}
     </main>
   );
 }

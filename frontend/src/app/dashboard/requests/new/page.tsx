@@ -116,13 +116,18 @@ export default function NewRequestPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-10 sm:px-10">
-      <h1 className="text-2xl font-semibold text-foreground">
-        Create reference request
-      </h1>
+      <section className="rounded-2xl border border-border bg-surface/90 p-6 shadow-sm">
+        <h1 className="text-2xl font-semibold text-foreground">
+          Create reference request
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Fill request details once and send a secure upload link to your referee.
+        </p>
+      </section>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-lg border border-border bg-surface p-6"
+        className="space-y-4 rounded-2xl border border-border bg-surface p-6 shadow-sm"
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-1">
@@ -236,9 +241,13 @@ export default function NewRequestPage() {
         </Button>
       </form>
 
-      {message ? <p className="text-sm text-success">{message}</p> : null}
+      {message ? (
+        <p className="rounded-lg border border-success/20 bg-green-50 px-4 py-3 text-sm text-success">
+          {message}
+        </p>
+      ) : null}
       {refereeLink ? (
-        <div className="space-y-2 rounded-lg border border-border bg-surface p-4">
+        <div className="space-y-2 rounded-2xl border border-border bg-surface p-4 shadow-sm">
           <p className="text-sm font-medium text-foreground">Referee link</p>
           <a
             href={refereeLink}
@@ -253,7 +262,11 @@ export default function NewRequestPage() {
           </p>
         </div>
       ) : null}
-      {error ? <p className="text-sm text-error">{error}</p> : null}
+      {error ? (
+        <p className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error">
+          {error}
+        </p>
+      ) : null}
     </main>
   );
 }
