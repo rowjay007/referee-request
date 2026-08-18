@@ -1,14 +1,5 @@
-<svg width="248" height="52" viewBox="0 0 248 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="2" y="2" width="48" height="48" rx="14" fill="url(#rrg)"/>
-  <path d="M16 16H31C35.4183 16 39 19.5817 39 24C39 28.4183 35.4183 32 31 32H23V26.5H31C32.3807 26.5 33.5 25.3807 33.5 24C33.5 22.6193 32.3807 21.5 31 21.5H21.5V36H16V16Z" fill="white"/>
-  <circle cx="33.5" cy="36" r="3" fill="#DBEAFE"/>
-  <text x="60" y="25" fill="#0B1220" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0.12em">REFEREE</text>
-  <text x="60" y="42" fill="#1D4ED8" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="800" letter-spacing="0.12em">REQUEST</text>
-  <defs>
-    <linearGradient id="rrg" x1="6" y1="6" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1D4ED8"/>
-      <stop offset="0.55" stop-color="#7C3AED"/>
-      <stop offset="1" stop-color="#0F766E"/>
-    </linearGradient>
-  </defs>
+<svg width="254" height="52" viewBox="0 0 254 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="20" cy="26" r="16" fill="#DC6243"/>
+  <text x="15.2" y="31.2" fill="#181426" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">R</text>
+  <text x="50" y="32" fill="#181426" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="0.12em">REFEREEREQUEST</text>
 </svg>
