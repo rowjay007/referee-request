@@ -77,6 +77,7 @@ textarea:focus {
 .rr-dot-grid {
   background-image: radial-gradient(rgba(60, 39, 112, 0.14) 1px, transparent 1px);
   background-size: 14px 14px;
+  animation: rr-dot-drift 16s linear infinite;
 }
 
 .rr-outline-pill {
@@ -85,8 +86,91 @@ textarea:focus {
   background: color-mix(in srgb, var(--surface) 88%, var(--primary) 12%);
 }
 
+@keyframes rr-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes rr-pulse-ring {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.95);
+  }
+  60% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.2;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes rr-note-bob {
+  0%,
+  100% {
+    transform: rotate(-6deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-4deg) translateY(-5px);
+  }
+}
+
+@keyframes rr-dot-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 42px 42px;
+  }
+}
+
+@keyframes rr-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rr-motion-rise {
+  animation: rr-rise 500ms ease-out both;
+}
+
+.rr-motion-float {
+  animation: rr-float 6s ease-in-out infinite;
+}
+
+.rr-motion-float-delay {
+  animation-delay: 1.4s;
+}
+
+.rr-motion-pulse-ring {
+  animation: rr-pulse-ring 2.8s ease-in-out infinite;
+}
+
+.rr-note-card.rr-motion-note {
+  animation: rr-note-bob 5.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rr-toast {
+    animation: none !important;
+  }
+
+  .rr-dot-grid,
+  .rr-motion-rise,
+  .rr-motion-float,
+  .rr-motion-pulse-ring,
+  .rr-note-card.rr-motion-note {
     animation: none !important;
   }
 }

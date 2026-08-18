@@ -62,10 +62,10 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="pointer-events-none absolute -left-28 top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
-      <div className="pointer-events-none absolute -right-16 top-[30rem] h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
+      <div className="rr-motion-float pointer-events-none absolute -left-28 top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
+      <div className="rr-motion-float rr-motion-float-delay pointer-events-none absolute -right-16 top-[30rem] h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
       <div className="mx-auto w-full max-w-7xl px-6 pb-14 pt-6 sm:px-10">
-        <header className="flex items-center justify-between gap-4">
+        <header className="rr-motion-rise flex items-center justify-between gap-4">
           <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={188} height={36} priority />
           <nav className="hidden items-center gap-10 text-sm text-muted md:flex">
             <a href="#how-it-works" className="transition-colors hover:text-foreground">
@@ -86,7 +86,7 @@ export default function Home() {
         <div className="mt-6 border-t border-border" />
 
         <section className="grid items-center gap-10 py-12 lg:grid-cols-[1fr_0.86fr]">
-          <div>
+          <div className="rr-motion-rise">
             <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">Reference requests</p>
             <h1 className="mt-5 text-5xl font-semibold leading-[0.94] tracking-tight text-foreground sm:text-7xl">
               Make the ask.
@@ -117,8 +117,8 @@ export default function Home() {
             </div>
           </div>
 
-          <article className="rr-paper-card relative rounded-[28px] border border-[#d9d3e5] bg-surface p-7 shadow-[0_20px_48px_-30px_rgba(24,20,38,0.45)]">
-            <span className="pointer-events-none absolute -right-6 top-2 h-24 w-24 rounded-full border border-primary/45" />
+          <article className="rr-paper-card rr-motion-float relative rounded-[28px] border border-[#d9d3e5] bg-surface p-7 shadow-[0_20px_48px_-30px_rgba(24,20,38,0.45)]">
+            <span className="rr-motion-pulse-ring pointer-events-none absolute -right-6 top-2 h-24 w-24 rounded-full border border-primary/45" />
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.28em] text-muted">
               <p>Live request / 024</p>
               <span className="rounded-full bg-[#F7DFA8] px-2.5 py-1 text-[11px] normal-case tracking-normal text-[#6F4E0B]">
@@ -146,7 +146,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <aside className="rr-note-card absolute -bottom-8 -left-8 rounded-3xl bg-secondary px-5 py-4 text-white shadow-2xl shadow-secondary/30">
+            <aside className="rr-note-card rr-motion-note absolute -bottom-8 -left-8 rounded-3xl bg-secondary px-5 py-4 text-white shadow-2xl shadow-secondary/30">
               <p className="text-[11px] uppercase tracking-[0.22em] text-white/60">No more</p>
               <p className="mt-2 text-3xl font-semibold leading-none">“Just checking in…”</p>
             </aside>
@@ -217,9 +217,10 @@ export default function Home() {
               {SIGNAL_ITEMS.map((item, index) => (
                 <li
                   key={item.title}
-                  className={`rounded-2xl border border-border bg-white/90 p-4 ${
+                  className={`rr-motion-rise rounded-2xl border border-border bg-white/90 p-4 ${
                     index % 2 === 1 ? "sm:ml-8" : "sm:mr-8"
                   }`}
+                  style={{ animationDelay: `${120 * (index + 1)}ms` }}
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                     Step {index + 1}
