@@ -40,8 +40,8 @@ export default function SigninPage() {
             <Image
               src="/referee-request-logo.svg"
               alt="RefereeRequest"
-              width={180}
-              height={40}
+              width={56}
+              height={56}
               className="mx-auto"
               priority
             />

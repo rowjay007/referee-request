@@ -55,7 +55,7 @@ export default function Home() {
       <div className="mx-auto w-full max-w-7xl px-6 pb-14 pt-6 sm:px-10">
         <header className="rr-motion-rise flex items-center justify-between gap-4">
           <Link href="/" aria-label="Go to RefereeRequest home">
-            <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={188} height={36} priority />
+            <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={44} height={44} priority />
           </Link>
           <nav className="hidden items-center gap-10 text-sm text-muted md:flex">
             <a href="#how-it-works" className="transition-colors hover:text-foreground">
@@ -68,9 +68,14 @@ export default function Home() {
               FAQ
             </a>
           </nav>
-          <Button onClick={() => navigateWithToast("/signup", "Starting your request...", "success")}>
-            Start a request
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => navigateWithToast("/signin", "Opening sign in...", "info")}>
+              Sign in
+            </Button>
+            <Button onClick={() => navigateWithToast("/signup", "Starting your request...", "success")}>
+              Start a request
+            </Button>
+          </div>
         </header>
 
         <div className="mt-6 border-t border-border" />
@@ -82,8 +87,7 @@ export default function Home() {
               <span className="mt-1 block">get a reference.</span>
             </h1>
             <p className="mt-8 max-w-xl text-2xl leading-relaxed text-muted">
-              Create a request, share one secure link, and see exactly what happens next.
-              No scattered threads. No awkward guessing.
+              Create once, share one secure link, and track each step clearly.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button
@@ -100,12 +104,12 @@ export default function Home() {
               </Button>
               <a
                 href="#how-it-works"
-                className="inline-flex items-center text-sm font-semibold uppercase tracking-[0.2em] text-muted transition-colors hover:text-foreground"
+                className="rounded-full border border-border bg-surface px-5 py-2 text-sm font-semibold uppercase tracking-[0.14em] text-muted transition-colors hover:text-foreground"
               >
                 See the method
               </a>
             </div>
-            <p className="mt-6 text-sm uppercase tracking-[0.2em] text-muted">
+            <p className="mt-6 inline-flex rounded-full border border-border bg-surface px-4 py-2 text-sm uppercase tracking-[0.2em] text-muted">
               References, without the chasing.
             </p>
           </div>
@@ -113,9 +117,7 @@ export default function Home() {
           <article className="rr-paper-card rr-motion-float relative rounded-[22px] border border-[#c8d5e7] bg-[#f4f8ff] shadow-[0_24px_52px_-34px_rgba(24,20,38,0.5)]">
             <div className="flex items-center justify-between border-b border-[#c8d5e7] px-5 py-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
-                  Workspace / requests
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">Workspace</p>
                 <p className="mt-1 text-2xl font-semibold text-foreground">Good morning, Alex</p>
               </div>
               <span className="rounded-xl bg-[#c9f3ef] px-3 py-1 text-xs font-semibold text-[#0d5b54]">
@@ -145,7 +147,7 @@ export default function Home() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-lg font-semibold text-foreground">Prof. Okafor</p>
-                    <p className="text-sm text-muted">Reference request</p>
+                    <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
                     <span className="rounded-lg bg-[#c8efc6] px-2.5 py-1 text-xs font-semibold text-[#245d20]">
@@ -157,7 +159,7 @@ export default function Home() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-lg font-semibold text-foreground">Dr. Mensah</p>
-                    <p className="text-sm text-muted">Reference request</p>
+                    <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
                     <span className="rounded-lg bg-[#ffedd7] px-2.5 py-1 text-xs font-semibold text-[#9a5a13]">
@@ -169,7 +171,7 @@ export default function Home() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-lg font-semibold text-foreground">A. Williams</p>
-                    <p className="text-sm text-muted">Reference request</p>
+                    <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
                     <span className="rounded-lg bg-[#c9f3ef] px-2.5 py-1 text-xs font-semibold text-[#0d5b54]">
@@ -194,17 +196,20 @@ export default function Home() {
               </h2>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
-              <article className="rr-tilt-3d rr-motion-rise rounded-2xl border border-border bg-background/70 p-5">
+              <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-background/70 p-5">
+                <span className="pointer-events-none absolute -right-5 -top-5 h-16 w-16 rounded-full bg-primary/10" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">01</p>
                 <p className="mt-3 text-4xl font-semibold text-foreground">One source</p>
                 <p className="mt-3 text-xl leading-relaxed text-muted">Context, files, and deadline stay together.</p>
               </article>
-              <article className="rr-tilt-3d rr-motion-rise rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "120ms" }}>
+              <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "120ms" }}>
+                <span className="pointer-events-none absolute -left-6 bottom-2 h-14 w-14 rounded-2xl border border-primary/30" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">02</p>
                 <p className="mt-3 text-4xl font-semibold text-foreground">Clear signals</p>
                 <p className="mt-3 text-xl leading-relaxed text-muted">Know what is opened, pending, or done.</p>
               </article>
-              <article className="rr-tilt-3d rr-motion-rise rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "220ms" }}>
+              <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "220ms" }}>
+                <span className="pointer-events-none absolute -right-7 bottom-3 h-16 w-16 rounded-full border border-primary/35" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">03</p>
                 <p className="mt-3 text-4xl font-semibold text-foreground">Human-friendly</p>
                 <p className="mt-3 text-xl leading-relaxed text-muted">Referees submit without onboarding friction.</p>
@@ -221,9 +226,7 @@ export default function Home() {
                 <h2 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-7xl">
                   A request that knows where it is going.
                 </h2>
-                <p className="mt-5 max-w-2xl text-xl leading-relaxed text-muted">
-                  Three simple moves turn a stressful favor into a professional workflow.
-                </p>
+                <p className="mt-5 max-w-2xl text-xl leading-relaxed text-muted">Three moves. One clear workflow.</p>
               </div>
               <div className="space-y-3">
                 <article className="rr-tilt-3d rounded-2xl border border-border bg-background/80 p-4">
@@ -302,7 +305,7 @@ export default function Home() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <Link href="/" aria-label="Go to RefereeRequest home">
-                <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={160} height={32} />
+                <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={36} height={36} />
               </Link>
               <span>References without the chasing.</span>
             </div>
