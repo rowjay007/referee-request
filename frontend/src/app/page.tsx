@@ -17,6 +17,11 @@ type FaqItem = {
   answer: string;
 };
 
+type SignalItem = {
+  title: string;
+  note: string;
+};
+
 const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Do referees need an account?",
@@ -30,6 +35,13 @@ const FAQ_ITEMS: FaqItem[] = [
     question: "Are files protected?",
     answer: "Yes. Access is scoped to each request through secure tokens.",
   },
+];
+
+const SIGNAL_ITEMS: SignalItem[] = [
+  { title: "Request brief assembled", note: "Context, files, role, and deadline in one source." },
+  { title: "Secure link delivered", note: "Referee opens directly from email without signup." },
+  { title: "Open status captured", note: "You know when the request is viewed." },
+  { title: "Reference submitted", note: "Upload lands and candidate gets notified." },
 ];
 
 export default function Home() {
@@ -49,7 +61,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <div className="pointer-events-none absolute -left-28 top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
+      <div className="pointer-events-none absolute -right-16 top-[30rem] h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
       <div className="mx-auto w-full max-w-7xl px-6 pb-14 pt-6 sm:px-10">
         <header className="flex items-center justify-between gap-4">
           <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={188} height={36} priority />
@@ -177,6 +191,68 @@ export default function Home() {
           <p className="max-w-md text-2xl leading-relaxed text-muted">
             Three simple moves turn a stressful favor into a professional workflow.
           </p>
+        </section>
+
+        <section className="grid gap-8 pb-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div className="space-y-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">Request signal flow</p>
+            <h2 className="text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-6xl">
+              From first send
+              <br />
+              to final file.
+            </h2>
+            <p className="max-w-lg text-xl leading-relaxed text-muted">
+              Every state is visible so you can follow up at the right time, not every time.
+            </p>
+            <div className="flex flex-wrap gap-3 pt-2 text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
+              <span className="rr-outline-pill px-3 py-2">Sent</span>
+              <span className="rr-outline-pill px-3 py-2">Opened</span>
+              <span className="rr-outline-pill px-3 py-2">Pending</span>
+              <span className="rr-outline-pill px-3 py-2">Submitted</span>
+            </div>
+          </div>
+          <article className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 shadow-[0_18px_45px_-34px_rgba(24,20,38,0.5)]">
+            <div className="rr-dot-grid pointer-events-none absolute inset-0 opacity-70" />
+            <ol className="relative space-y-3">
+              {SIGNAL_ITEMS.map((item, index) => (
+                <li
+                  key={item.title}
+                  className={`rounded-2xl border border-border bg-white/90 p-4 ${
+                    index % 2 === 1 ? "sm:ml-8" : "sm:mr-8"
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                    Step {index + 1}
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">{item.title}</p>
+                  <p className="mt-2 text-base text-muted">{item.note}</p>
+                </li>
+              ))}
+            </ol>
+          </article>
+        </section>
+
+        <section className="grid gap-4 pb-12 lg:grid-cols-[1.1fr_0.9fr]">
+          <article className="rounded-3xl border border-border bg-surface p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Who this helps</p>
+            <h3 className="mt-4 text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
+              Built for high-stakes applications with busy referees.
+            </h3>
+            <p className="mt-4 text-lg leading-relaxed text-muted">
+              Scholarship deadlines, university references, fellowship submissions, and hiring loops all benefit
+              from one organized request path.
+            </p>
+          </article>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <article className="rounded-3xl bg-secondary px-6 py-7 text-white">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Response quality</p>
+              <p className="mt-3 text-3xl font-semibold leading-tight">Better context in the first message.</p>
+            </article>
+            <article className="rounded-3xl border border-border bg-surface px-6 py-7">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Completion rate</p>
+              <p className="mt-3 text-3xl font-semibold leading-tight text-foreground">Fewer reminders, faster delivery.</p>
+            </article>
+          </div>
         </section>
 
         <section className="mb-2 grid gap-4 sm:grid-cols-3">
