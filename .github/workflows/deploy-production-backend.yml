@@ -60,7 +60,8 @@ jobs:
             exit 1
           fi
           for i in {1..30}; do
-            if curl --fail --silent --show-error "$PRODUCTION_API_BASE_URL/api/v1/health/ready" >/dev/null; then
+            if curl --fail --silent --show-error "$PRODUCTION_API_BASE_URL/api/v1/health/ready" >/dev/null || \
+               curl --fail --silent --show-error "$PRODUCTION_API_BASE_URL/health/ready" >/dev/null; then
               echo "Production is healthy."
               exit 0
             fi
