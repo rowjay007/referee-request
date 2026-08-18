@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ComponentType } from "react";
 import {
@@ -35,9 +36,14 @@ export default function Home() {
 
       <div className="mx-auto flex w-full max-w-6xl flex-col px-6 pb-16 pt-6 sm:px-10">
         <header className="sticky top-0 z-30 mb-8 flex items-center justify-between rounded-xl border border-border/80 bg-surface/85 px-4 py-3 shadow-sm backdrop-blur-md">
-          <div className="inline-flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-            <p className="text-base font-semibold text-primary">RefereeRequest</p>
+          <div className="inline-flex items-center gap-2.5">
+            <Image
+              src="/referee-request-logo.svg"
+              alt="RefereeRequest"
+              width={160}
+              height={35}
+              priority
+            />
           </div>
           <div className="hidden items-center gap-5 text-sm text-muted md:flex">
             <a href="#how-it-works" className="transition-colors hover:text-foreground">
