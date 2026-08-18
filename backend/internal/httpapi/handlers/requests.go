@@ -4,22 +4,26 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/rowjay007/referee-request/backend/internal/config"
 	httputil "github.com/rowjay007/referee-request/backend/internal/httpapi/middleware"
 	"github.com/rowjay007/referee-request/backend/internal/httpapi/response"
+	"github.com/rowjay007/referee-request/backend/internal/security"
 	"github.com/rowjay007/referee-request/backend/internal/store"
 )
 
 type ReferenceRequestHandler struct {
+	cfg      *config.Config
 	requests *store.ReferenceRequestStore
 }
 
-func NewReferenceRequestHandler(requests *store.ReferenceRequestStore) *ReferenceRequestHandler {
-	return &ReferenceRequestHandler{requests: requests}
+func NewReferenceRequestHandler(cfg *config.Config, requests *store.ReferenceRequestStore) *ReferenceRequestHandler {
+	return &ReferenceRequestHandler{cfg: cfg, requests: requests}
 }
 
 type createReferenceRequestPayload struct {
@@ -161,7 +165,22 @@ func (h *ReferenceRequestHandler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request, err := h.requests.MarkReferenceRequestSent(r.Context(), requestID, userID)
+	token, err := security.GenerateRefereeToken()
+	if err != nil {
+		response.InternalError(w)
+		return
+	}
+
+	tokenHash := security.HashRefereeToken(token)
+	expiresAt := time.Now().UTC().Add(30 * 24 * time.Hour)
+
+	request, invitation, err := h.requests.SendReferenceRequestWithInvitation(
+		r.Context(),
+		requestID,
+		userID,
+		tokenHash,
+		expiresAt,
+	)
 	if err != nil {
 		switch err {
 		case store.ErrReferenceRequestNotFound:
@@ -174,9 +193,17 @@ func (h *ReferenceRequestHandler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	refereeLink, err := url.JoinPath(h.cfg.FrontendBaseURL, "referee", token)
+	if err != nil {
+		response.InternalError(w)
+		return
+	}
+
 	response.JSON(w, http.StatusOK, response.Envelope{
 		Data: map[string]any{
-			"request": requestToPayload(*request),
+			"request":      requestToPayload(*request),
+			"refereeLink":  refereeLink,
+			"tokenExpires": invitation.ExpiresAt.UTC().Format(time.RFC3339),
 		},
 	})
 }

@@ -158,3 +158,75 @@ paths:
           description: Unauthorized
         "404":
           description: Not found
+  /api/v1/referee/{token}:
+    get:
+      operationId: getRefereeRequest
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Referee request loaded
+        "403":
+          description: Revoked token
+        "404":
+          description: Invalid token
+        "410":
+          description: Expired token
+  /api/v1/referee/{token}/documents/{documentId}:
+    get:
+      operationId: downloadRefereeSupportingDocument
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Document downloaded
+        "404":
+          description: Invalid token or document
+        "410":
+          description: Expired token
+  /api/v1/referee/{token}/submit:
+    post:
+      operationId: submitReferenceByReferee
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                referenceFile:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Reference submitted
+        "400":
+          description: Validation error
+        "403":
+          description: Revoked token
+        "404":
+          description: Invalid token
+        "409":
+          description: Already submitted
+        "410":
+          description: Expired token

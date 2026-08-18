@@ -13,6 +13,7 @@ type Config struct {
 	Environment        string
 	Port               string
 	BaseURL            string
+	FrontendBaseURL    string
 	DatabaseURL        string
 	JWTSecret          string
 	JWTTTLMin          int
@@ -30,6 +31,7 @@ func Load() (*Config, error) {
 		Environment:        getEnv("APP_ENV", "development"),
 		Port:               getEnv("APP_PORT", "8080"),
 		BaseURL:            getEnv("APP_BASE_URL", "http://localhost:8080"),
+		FrontendBaseURL:    getEnv("FRONTEND_BASE_URL", "http://localhost:3000"),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		OTELExporter:       getEnv("OTEL_EXPORTER", "stdout"),

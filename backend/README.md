@@ -25,3 +25,9 @@ Migration files are in `migrations/`.
 - `POST /api/v1/requests/{requestId}/documents`
 - `GET /api/v1/requests/{requestId}/documents`
 - `POST /api/v1/requests/{requestId}/send`
+
+## Referee endpoints
+
+- `GET /api/v1/referee/{token}`
+- `GET /api/v1/referee/{token}/documents/{documentId}`
+- `POST /api/v1/referee/{token}/submit`

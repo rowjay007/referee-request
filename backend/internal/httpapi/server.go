@@ -37,8 +37,9 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) http.H
 	requestStore := store.NewReferenceRequestStore(db)
 	documentStorage := storage.NewLocalStore(cfg.StorageLocalRoot)
 	authHandler := handlers.NewAuthHandler(cfg, userStore)
-	requestHandler := handlers.NewReferenceRequestHandler(requestStore)
+	requestHandler := handlers.NewReferenceRequestHandler(cfg, requestStore)
 	documentHandler := handlers.NewDocumentHandler(cfg, requestStore, documentStorage)
+	refereeHandler := handlers.NewRefereeHandler(cfg, requestStore, documentStorage)
 
 	router.Get("/health", handlers.Health)
 
@@ -60,6 +61,13 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) http.H
 			requestRouter.Post("/{requestId}/send", requestHandler.Send)
 			requestRouter.Get("/{requestId}/documents", documentHandler.List)
 			requestRouter.Post("/{requestId}/documents", documentHandler.Upload)
+		})
+
+		r.Route("/referee", func(refereeRouter chi.Router) {
+			refereeRouter.Use(httprate.LimitByIP(30, time.Minute))
+			refereeRouter.Get("/{token}", refereeHandler.GetRequest)
+			refereeRouter.Get("/{token}/documents/{documentId}", refereeHandler.DownloadDocument)
+			refereeRouter.Post("/{token}/submit", refereeHandler.SubmitReference)
 		})
 	})
 

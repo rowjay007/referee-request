@@ -50,6 +50,12 @@ cd backend && go test ./...
 - `GET /api/v1/requests/{requestId}/documents`
 - `POST /api/v1/requests/{requestId}/send`
 
+## Phase 3 referee endpoints
+
+- `GET /api/v1/referee/{token}`
+- `GET /api/v1/referee/{token}/documents/{documentId}`
+- `POST /api/v1/referee/{token}/submit`
+
 ## Environment model
 
 - `dev` branch deploys to staging infrastructure and staging Supabase
@@ -67,4 +73,3 @@ Set these GitHub repository secrets for staging automation:
 - `STAGING_SUPABASE_PROJECT_ID`
 - `STAGING_API_BASE_URL`
 - `RENDER_STAGING_DEPLOY_HOOK`
-# referee-request

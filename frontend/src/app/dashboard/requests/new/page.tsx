@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
@@ -23,10 +22,11 @@ type UploadDocumentResponse = {
 
 type SendRequestResponse = {
   request: ReferenceRequest;
+  refereeLink: string;
+  tokenExpires: string;
 };
 
 export default function NewRequestPage() {
-  const router = useRouter();
   const [refereeName, setRefereeName] = useState("");
   const [refereeEmail, setRefereeEmail] = useState("");
   const [refereeRelationship, setRefereeRelationship] = useState("");
@@ -38,6 +38,8 @@ export default function NewRequestPage() {
   const [files, setFiles] = useState<FileList | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [refereeLink, setRefereeLink] = useState("");
+  const [tokenExpires, setTokenExpires] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -51,6 +53,8 @@ export default function NewRequestPage() {
     setLoading(true);
     setError("");
     setMessage("");
+    setRefereeLink("");
+    setTokenExpires("");
     posthog.capture("request_creation_started");
 
     try {
@@ -85,15 +89,19 @@ export default function NewRequestPage() {
         }
       }
 
-      await apiRequest<SendRequestResponse>(`/requests/${created.request.id}/send`, {
+      const sent = await apiRequest<SendRequestResponse>(
+        `/requests/${created.request.id}/send`,
+        {
         method: "POST",
         token,
-      });
+        },
+      );
 
       posthog.capture("request_created");
       posthog.capture("request_sent");
       setMessage("Request created and sent successfully.");
-      router.push("/dashboard/requests");
+      setRefereeLink(sent.refereeLink);
+      setTokenExpires(sent.tokenExpires);
     } catch (err) {
       setError(
         err instanceof Error
@@ -228,6 +236,22 @@ export default function NewRequestPage() {
       </form>
 
       {message ? <p className="text-sm text-success">{message}</p> : null}
+      {refereeLink ? (
+        <div className="space-y-2 rounded-lg border border-border bg-surface p-4">
+          <p className="text-sm font-medium text-foreground">Referee link</p>
+          <a
+            href={refereeLink}
+            target="_blank"
+            rel="noreferrer"
+            className="break-all text-sm text-primary underline underline-offset-2"
+          >
+            {refereeLink}
+          </a>
+          <p className="text-xs text-muted">
+            Expires: {new Date(tokenExpires).toLocaleString()}
+          </p>
+        </div>
+      ) : null}
       {error ? <p className="text-sm text-error">{error}</p> : null}
     </main>
   );

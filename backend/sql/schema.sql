@@ -38,3 +38,28 @@ CREATE TABLE supporting_documents (
     size_bytes BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE TABLE referee_invitations (
+    id UUID PRIMARY KEY,
+    reference_request_id UUID NOT NULL UNIQUE REFERENCES reference_requests(id),
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+    opened_at TIMESTAMPTZ,
+    submitted_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE submitted_references (
+    id UUID PRIMARY KEY,
+    reference_request_id UUID NOT NULL UNIQUE REFERENCES reference_requests(id),
+    referee_invitation_id UUID NOT NULL UNIQUE REFERENCES referee_invitations(id),
+    storage_key TEXT NOT NULL UNIQUE,
+    original_filename TEXT NOT NULL,
+    safe_filename TEXT NOT NULL,
+    file_extension TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    size_bytes BIGINT NOT NULL,
+    submitted_at TIMESTAMPTZ NOT NULL
+);
