@@ -33,6 +33,7 @@ export default function AuthCallbackPage() {
         if (exchangeError) {
           throw exchangeError;
         }
+        window.history.replaceState({}, "", "/auth/callback");
 
         const { data, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
