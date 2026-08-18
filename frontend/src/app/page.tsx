@@ -17,11 +17,6 @@ type FaqItem = {
   answer: string;
 };
 
-type SignalItem = {
-  title: string;
-  note: string;
-};
-
 const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Do referees need an account?",
@@ -35,13 +30,6 @@ const FAQ_ITEMS: FaqItem[] = [
     question: "Are files protected?",
     answer: "Yes. Access is scoped to each request through secure tokens.",
   },
-];
-
-const SIGNAL_ITEMS: SignalItem[] = [
-  { title: "Request brief assembled", note: "Context, files, role, and deadline in one source." },
-  { title: "Secure link delivered", note: "Referee opens directly from email without signup." },
-  { title: "Open status captured", note: "You know when the request is viewed." },
-  { title: "Reference submitted", note: "Upload lands and candidate gets notified." },
 ];
 
 export default function Home() {
@@ -66,7 +54,9 @@ export default function Home() {
       <div className="rr-motion-float rr-motion-float-delay pointer-events-none absolute -right-16 top-[30rem] h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
       <div className="mx-auto w-full max-w-7xl px-6 pb-14 pt-6 sm:px-10">
         <header className="rr-motion-rise flex items-center justify-between gap-4">
-          <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={188} height={36} priority />
+          <Link href="/" aria-label="Go to RefereeRequest home">
+            <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={188} height={36} priority />
+          </Link>
           <nav className="hidden items-center gap-10 text-sm text-muted md:flex">
             <a href="#how-it-works" className="transition-colors hover:text-foreground">
               The method
@@ -85,15 +75,15 @@ export default function Home() {
 
         <div className="mt-6 border-t border-border" />
 
-        <section className="grid items-center gap-10 py-12 lg:grid-cols-[1fr_0.86fr]">
+        <section className="grid items-center gap-10 py-12 lg:grid-cols-[1fr_0.94fr]">
           <div className="rr-motion-rise">
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">Reference requests</p>
-            <h1 className="mt-5 text-5xl font-semibold leading-[0.94] tracking-tight text-foreground sm:text-7xl">
-              Make the ask.
-              <span className="mt-1 block text-primary">Lose the chase.</span>
+            <h1 className="mt-2 text-5xl font-semibold leading-[0.94] tracking-tight text-foreground sm:text-7xl">
+              The clean way to
+              <span className="mt-1 block">get a reference.</span>
             </h1>
             <p className="mt-8 max-w-xl text-2xl leading-relaxed text-muted">
-              RefereeRequest turns scattered follow-ups into one clear flow from your first request to final upload.
+              Create a request, share one secure link, and see exactly what happens next.
+              No scattered threads. No awkward guessing.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button
@@ -115,45 +105,86 @@ export default function Home() {
                 See the method
               </a>
             </div>
+            <p className="mt-6 text-sm uppercase tracking-[0.2em] text-muted">
+              References, without the chasing.
+            </p>
           </div>
 
-          <article className="rr-paper-card rr-motion-float relative rounded-[28px] border border-[#d9d3e5] bg-surface p-7 shadow-[0_20px_48px_-30px_rgba(24,20,38,0.45)]">
-            <span className="rr-motion-pulse-ring pointer-events-none absolute -right-6 top-2 h-24 w-24 rounded-full border border-primary/45" />
-            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.28em] text-muted">
-              <p>Live request / 024</p>
-              <span className="rounded-full bg-[#F7DFA8] px-2.5 py-1 text-[11px] normal-case tracking-normal text-[#6F4E0B]">
-                Moving
+          <article className="rr-paper-card rr-motion-float relative rounded-[22px] border border-[#c8d5e7] bg-[#f4f8ff] shadow-[0_24px_52px_-34px_rgba(24,20,38,0.5)]">
+            <div className="flex items-center justify-between border-b border-[#c8d5e7] px-5 py-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
+                  Workspace / requests
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">Good morning, Alex</p>
+              </div>
+              <span className="rounded-xl bg-[#c9f3ef] px-3 py-1 text-xs font-semibold text-[#0d5b54]">
+                3 active
               </span>
             </div>
-            <div className="mt-4 space-y-4 border-t border-border pt-5">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">For</p>
-                <p className="mt-2 text-4xl font-semibold text-foreground">Dr. Amelia Hart</p>
-                <p className="mt-2 text-lg text-muted">MSc application · deadline 14 May</p>
+            <div className="grid grid-cols-3 border-b border-[#c8d5e7] text-foreground">
+              <div className="border-r border-[#c8d5e7] px-5 py-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">Active</p>
+                <p className="mt-2 text-5xl font-semibold">03</p>
               </div>
-              <div className="space-y-4 pt-2 text-base">
-                <div className="border-t border-border pt-3">
-                  <p className="font-semibold text-foreground">Request sent</p>
-                  <p className="text-muted">Today, 09:42</p>
+              <div className="border-r border-[#c8d5e7] px-5 py-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">Submitted</p>
+                <p className="mt-2 text-5xl font-semibold">12</p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">On time</p>
+                <p className="mt-2 text-5xl font-semibold">98%</p>
+              </div>
+            </div>
+            <div className="px-5 py-5">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-lg font-semibold text-foreground">Recent activity</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">View all</p>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-lg font-semibold text-foreground">Prof. Okafor</p>
+                    <p className="text-sm text-muted">Reference request</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="rounded-lg bg-[#c8efc6] px-2.5 py-1 text-xs font-semibold text-[#245d20]">
+                      Opened
+                    </span>
+                    <p className="mt-1 text-sm text-muted">10:18</p>
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="font-semibold text-foreground">Opened by referee</p>
-                  <p className="text-muted">Today, 10:18</p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-lg font-semibold text-foreground">Dr. Mensah</p>
+                    <p className="text-sm text-muted">Reference request</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="rounded-lg bg-[#ffedd7] px-2.5 py-1 text-xs font-semibold text-[#9a5a13]">
+                      Awaiting upload
+                    </span>
+                    <p className="mt-1 text-sm text-muted">Yesterday</p>
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="font-semibold text-foreground">Awaiting reference upload</p>
-                  <p className="text-muted">Deadline in 5 days</p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-lg font-semibold text-foreground">A. Williams</p>
+                    <p className="text-sm text-muted">Reference request</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="rounded-lg bg-[#c9f3ef] px-2.5 py-1 text-xs font-semibold text-[#0d5b54]">
+                      Submitted
+                    </span>
+                    <p className="mt-1 text-sm text-muted">Mon</p>
+                  </div>
                 </div>
               </div>
             </div>
-            <aside className="rr-note-card rr-motion-note absolute -bottom-8 -left-8 rounded-3xl bg-secondary px-5 py-4 text-white shadow-2xl shadow-secondary/30">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-white/60">No more</p>
-              <p className="mt-2 text-3xl font-semibold leading-none">“Just checking in…”</p>
-            </aside>
           </article>
         </section>
 
-        <section id="why" className="grid gap-6 border-y border-border py-10 lg:grid-cols-[1.25fr_2fr]">
+        <section id="why" className="rounded-3xl border border-border bg-surface p-8 sm:p-10">
+          <div className="grid gap-8 lg:grid-cols-[1.2fr_1.8fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The shift</p>
             <h2 className="mt-4 text-5xl font-semibold leading-[0.95] tracking-tight text-foreground">
@@ -179,6 +210,7 @@ export default function Home() {
               <p className="mt-4 text-2xl leading-relaxed text-muted">Referees submit without onboarding friction.</p>
             </div>
           </div>
+          </div>
         </section>
 
         <section id="how-it-works" className="grid gap-8 py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
@@ -191,46 +223,6 @@ export default function Home() {
           <p className="max-w-md text-2xl leading-relaxed text-muted">
             Three simple moves turn a stressful favor into a professional workflow.
           </p>
-        </section>
-
-        <section className="grid gap-8 pb-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div className="space-y-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">Request signal flow</p>
-            <h2 className="text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-6xl">
-              From first send
-              <br />
-              to final file.
-            </h2>
-            <p className="max-w-lg text-xl leading-relaxed text-muted">
-              Every state is visible so you can follow up at the right time, not every time.
-            </p>
-            <div className="flex flex-wrap gap-3 pt-2 text-xs font-semibold uppercase tracking-[0.16em] text-foreground">
-              <span className="rr-outline-pill px-3 py-2">Sent</span>
-              <span className="rr-outline-pill px-3 py-2">Opened</span>
-              <span className="rr-outline-pill px-3 py-2">Pending</span>
-              <span className="rr-outline-pill px-3 py-2">Submitted</span>
-            </div>
-          </div>
-          <article className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 shadow-[0_18px_45px_-34px_rgba(24,20,38,0.5)]">
-            <div className="rr-dot-grid pointer-events-none absolute inset-0 opacity-70" />
-            <ol className="relative space-y-3">
-              {SIGNAL_ITEMS.map((item, index) => (
-                <li
-                  key={item.title}
-                  className={`rr-motion-rise rounded-2xl border border-border bg-white/90 p-4 ${
-                    index % 2 === 1 ? "sm:ml-8" : "sm:mr-8"
-                  }`}
-                  style={{ animationDelay: `${120 * (index + 1)}ms` }}
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                    Step {index + 1}
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">{item.title}</p>
-                  <p className="mt-2 text-base text-muted">{item.note}</p>
-                </li>
-              ))}
-            </ol>
-          </article>
         </section>
 
         <section className="grid gap-4 pb-12 lg:grid-cols-[1.1fr_0.9fr]">
@@ -332,7 +324,9 @@ export default function Home() {
         <footer className="border-t border-border py-8 text-sm text-muted">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={160} height={32} />
+              <Link href="/" aria-label="Go to RefereeRequest home">
+                <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={160} height={32} />
+              </Link>
               <span>References without the chasing.</span>
             </div>
             <div className="flex flex-wrap items-center gap-5">
