@@ -36,18 +36,21 @@ export default function SigninPage() {
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-6 px-6 py-10">
       <article className="space-y-6 rounded-2xl border border-border bg-surface/95 p-7 shadow-lg shadow-primary/10 backdrop-blur">
         <div className="space-y-4 text-center">
-          <Image
-            src="/referee-request-logo.svg"
-            alt="RefereeRequest"
-            width={180}
-            height={40}
-            className="mx-auto"
-            priority
-          />
+          <Link href="/" className="mx-auto block w-fit" aria-label="Go to RefereeRequest home">
+            <Image
+              src="/referee-request-logo.svg"
+              alt="RefereeRequest"
+              width={180}
+              height={40}
+              className="mx-auto"
+              priority
+            />
+          </Link>
           <h1 className="text-2xl font-semibold text-foreground">Sign in with Google</h1>
           <p className="text-sm text-muted">
             One tap sign in, then create and track reference requests.
           </p>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted">References, without the chasing.</p>
         </div>
         <Button
           disabled={loading}
