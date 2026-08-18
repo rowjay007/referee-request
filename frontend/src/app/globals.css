@@ -74,6 +74,17 @@ textarea:focus {
   transform: rotate(-6deg);
 }
 
+.rr-dot-grid {
+  background-image: radial-gradient(rgba(60, 39, 112, 0.14) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+.rr-outline-pill {
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, var(--primary) 12%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rr-toast {
     animation: none !important;
