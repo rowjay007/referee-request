@@ -18,14 +18,14 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #1d4ed8 0%, #06b6d4 100%)",
-          color: "white",
-          fontSize: 36,
+          background: "#DC6243",
+          color: "#181426",
+          fontSize: 34,
           fontWeight: 800,
           fontFamily: "Inter, Arial, sans-serif",
         }}
       >
-        RR
+        R
       </div>
     ),
     size,

@@ -103,7 +103,8 @@ export default function Home() {
             </div>
           </div>
 
-          <article className="rounded-[28px] border border-border bg-surface p-7 shadow-[0_20px_48px_-30px_rgba(24,20,38,0.45)]">
+          <article className="rr-paper-card relative rounded-[28px] border border-[#d9d3e5] bg-surface p-7 shadow-[0_20px_48px_-30px_rgba(24,20,38,0.45)]">
+            <span className="pointer-events-none absolute -right-6 top-2 h-24 w-24 rounded-full border border-primary/45" />
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.28em] text-muted">
               <p>Live request / 024</p>
               <span className="rounded-full bg-[#F7DFA8] px-2.5 py-1 text-[11px] normal-case tracking-normal text-[#6F4E0B]">
@@ -131,6 +132,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            <aside className="rr-note-card absolute -bottom-8 -left-8 rounded-3xl bg-secondary px-5 py-4 text-white shadow-2xl shadow-secondary/30">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/60">No more</p>
+              <p className="mt-2 text-3xl font-semibold leading-none">“Just checking in…”</p>
+            </aside>
           </article>
         </section>
 
@@ -172,6 +177,24 @@ export default function Home() {
           <p className="max-w-md text-2xl leading-relaxed text-muted">
             Three simple moves turn a stressful favor into a professional workflow.
           </p>
+        </section>
+
+        <section className="mb-2 grid gap-4 sm:grid-cols-3">
+          <article className="rounded-2xl border border-border bg-surface p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Request quality</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">One complete brief</p>
+            <p className="mt-2 text-lg text-muted">Institution, program, deadline, and files in one ask.</p>
+          </article>
+          <article className="rounded-2xl border border-border bg-surface p-5 sm:translate-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Referee effort</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">No onboarding wall</p>
+            <p className="mt-2 text-lg text-muted">Referees open the link and upload directly.</p>
+          </article>
+          <article className="rounded-2xl border border-border bg-surface p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Candidate visibility</p>
+            <p className="mt-2 text-3xl font-semibold text-foreground">Track each step</p>
+            <p className="mt-2 text-lg text-muted">See sent, opened, and submitted status clearly.</p>
+          </article>
         </section>
 
         <section className="rounded-3xl bg-secondary px-8 py-12 text-white sm:px-10">

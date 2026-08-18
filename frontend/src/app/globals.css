@@ -66,6 +66,14 @@ textarea:focus {
   animation: rr-toast-enter 220ms ease-out;
 }
 
+.rr-paper-card {
+  transform: rotate(2deg);
+}
+
+.rr-note-card {
+  transform: rotate(-6deg);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rr-toast {
     animation: none !important;

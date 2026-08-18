@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Request and track references without chasing referees manually.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0b1020",
-    theme_color: "#2563eb",
+    background_color: "#f7f2e8",
+    theme_color: "#dc6243",
     icons: [
       {
         src: "/icon",
