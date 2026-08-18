@@ -19,7 +19,7 @@ export function getSupabaseClient() {
     auth: {
       flowType: "pkce",
       persistSession: true,
-      detectSessionInUrl: true,
+      detectSessionInUrl: false,
     },
   });
 
