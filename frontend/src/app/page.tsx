@@ -183,87 +183,64 @@ export default function Home() {
           </article>
         </section>
 
-        <section id="why" className="rounded-3xl border border-border bg-surface p-8 sm:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_1.8fr]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The shift</p>
-            <h2 className="mt-4 text-5xl font-semibold leading-[0.95] tracking-tight text-foreground">
-              Less follow-up.
-              <br />
-              More forward motion.
-            </h2>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-3">
-            <div className="border-l-2 border-primary pl-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">01</p>
-              <p className="mt-6 text-4xl font-semibold text-foreground">One source</p>
-              <p className="mt-4 text-2xl leading-relaxed text-muted">Context, files, and deadline stay together.</p>
+        <section id="why" className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_1.95fr]">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The shift</p>
+              <h2 className="mt-4 text-5xl font-semibold leading-[0.95] tracking-tight text-foreground">
+                Less follow-up.
+                <br />
+                More forward motion.
+              </h2>
             </div>
-            <div className="border-l-2 border-primary pl-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">02</p>
-              <p className="mt-6 text-4xl font-semibold text-foreground">Clear signals</p>
-              <p className="mt-4 text-2xl leading-relaxed text-muted">Know what is opened, pending, or done.</p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <article className="rr-tilt-3d rr-motion-rise rounded-2xl border border-border bg-background/70 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">01</p>
+                <p className="mt-3 text-4xl font-semibold text-foreground">One source</p>
+                <p className="mt-3 text-xl leading-relaxed text-muted">Context, files, and deadline stay together.</p>
+              </article>
+              <article className="rr-tilt-3d rr-motion-rise rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "120ms" }}>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">02</p>
+                <p className="mt-3 text-4xl font-semibold text-foreground">Clear signals</p>
+                <p className="mt-3 text-xl leading-relaxed text-muted">Know what is opened, pending, or done.</p>
+              </article>
+              <article className="rr-tilt-3d rr-motion-rise rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "220ms" }}>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">03</p>
+                <p className="mt-3 text-4xl font-semibold text-foreground">Human-friendly</p>
+                <p className="mt-3 text-xl leading-relaxed text-muted">Referees submit without onboarding friction.</p>
+              </article>
             </div>
-            <div className="border-l-2 border-primary pl-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">03</p>
-              <p className="mt-6 text-4xl font-semibold text-foreground">Human-friendly</p>
-              <p className="mt-4 text-2xl leading-relaxed text-muted">Referees submit without onboarding friction.</p>
-            </div>
-          </div>
           </div>
         </section>
 
-        <section id="how-it-works" className="grid gap-8 py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The method</p>
-            <h2 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-7xl">
-              A request that knows where it is going.
-            </h2>
+        <section id="how-it-works" className="py-12">
+          <div className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
+            <div className="grid gap-7 lg:grid-cols-[1.12fr_0.88fr] lg:items-end">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The method</p>
+                <h2 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-7xl">
+                  A request that knows where it is going.
+                </h2>
+                <p className="mt-5 max-w-2xl text-xl leading-relaxed text-muted">
+                  Three simple moves turn a stressful favor into a professional workflow.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step 1</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">Build one complete request</p>
+                </article>
+                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/80 p-4 sm:translate-x-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step 2</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">Send one secure referee link</p>
+                </article>
+                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step 3</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">Track status until submission</p>
+                </article>
+              </div>
+            </div>
           </div>
-          <p className="max-w-md text-2xl leading-relaxed text-muted">
-            Three simple moves turn a stressful favor into a professional workflow.
-          </p>
-        </section>
-
-        <section className="grid gap-4 pb-12 lg:grid-cols-[1.1fr_0.9fr]">
-          <article className="rounded-3xl border border-border bg-surface p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Who this helps</p>
-            <h3 className="mt-4 text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
-              Built for high-stakes applications with busy referees.
-            </h3>
-            <p className="mt-4 text-lg leading-relaxed text-muted">
-              Scholarship deadlines, university references, fellowship submissions, and hiring loops all benefit
-              from one organized request path.
-            </p>
-          </article>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <article className="rounded-3xl bg-secondary px-6 py-7 text-white">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Response quality</p>
-              <p className="mt-3 text-3xl font-semibold leading-tight">Better context in the first message.</p>
-            </article>
-            <article className="rounded-3xl border border-border bg-surface px-6 py-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Completion rate</p>
-              <p className="mt-3 text-3xl font-semibold leading-tight text-foreground">Fewer reminders, faster delivery.</p>
-            </article>
-          </div>
-        </section>
-
-        <section className="mb-2 grid gap-4 sm:grid-cols-3">
-          <article className="rounded-2xl border border-border bg-surface p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Request quality</p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">One complete brief</p>
-            <p className="mt-2 text-lg text-muted">Institution, program, deadline, and files in one ask.</p>
-          </article>
-          <article className="rounded-2xl border border-border bg-surface p-5 sm:translate-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Referee effort</p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">No onboarding wall</p>
-            <p className="mt-2 text-lg text-muted">Referees open the link and upload directly.</p>
-          </article>
-          <article className="rounded-2xl border border-border bg-surface p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Candidate visibility</p>
-            <p className="mt-2 text-3xl font-semibold text-foreground">Track each step</p>
-            <p className="mt-2 text-lg text-muted">See sent, opened, and submitted status clearly.</p>
-          </article>
         </section>
 
         <section className="rounded-3xl bg-secondary px-8 py-12 text-white sm:px-10">
