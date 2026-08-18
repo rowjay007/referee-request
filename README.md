@@ -105,7 +105,7 @@ Set Render environment values:
 - `RESEND_FROM_EMAIL` (use `onboarding@resend.dev` for staging tests)
 - `NOTIFICATION_DISPATCH_TOKEN`
 
-Set backend Supabase environment values (for Google auth):
+Optional (only when re-enabling Google auth later): backend Supabase environment values:
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
@@ -113,5 +113,3 @@ Set backend Supabase environment values (for Google auth):
 Set frontend environment values:
 
 - `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
