@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"regexp"
 	"strings"
@@ -36,7 +35,7 @@ type loginRequest struct {
 
 func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	var payload signupRequest
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decodeJSONBody(r, &payload, 64*1024); err != nil {
 		response.ValidationError(w, map[string]any{"body": "Invalid JSON body."})
 		return
 	}
@@ -85,7 +84,7 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var payload loginRequest
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decodeJSONBody(r, &payload, 64*1024); err != nil {
 		response.ValidationError(w, map[string]any{"body": "Invalid JSON body."})
 		return
 	}

@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -68,7 +70,8 @@ func (s *ResendSender) SendEmail(ctx context.Context, message EmailMessage) (str
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", errors.New("resend request failed")
+		errorBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return "", fmt.Errorf("resend request failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(errorBody)))
 	}
 
 	type resendResponse struct {

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"strconv"
 
@@ -22,7 +23,7 @@ func NewNotificationHandler(cfg *config.Config, notifications *notification.Serv
 }
 
 func (h *NotificationHandler) Dispatch(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("X-Dispatch-Token") != h.cfg.DispatchToken {
+	if !h.validDispatchToken(r.Header.Get("X-Dispatch-Token")) {
 		response.Unauthorized(w, "Invalid dispatch token.")
 		return
 	}
@@ -53,7 +54,7 @@ func (h *NotificationHandler) Dispatch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *NotificationHandler) QueueReminders(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("X-Dispatch-Token") != h.cfg.DispatchToken {
+	if !h.validDispatchToken(r.Header.Get("X-Dispatch-Token")) {
 		response.Unauthorized(w, "Invalid dispatch token.")
 		return
 	}
@@ -70,4 +71,11 @@ func (h *NotificationHandler) QueueReminders(w http.ResponseWriter, r *http.Requ
 			"leadHours":   h.cfg.ReminderLeadHours,
 		},
 	})
+}
+
+func (h *NotificationHandler) validDispatchToken(input string) bool {
+	if len(input) != len(h.cfg.DispatchToken) {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(input), []byte(h.cfg.DispatchToken)) == 1
 }

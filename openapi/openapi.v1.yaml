@@ -12,6 +12,14 @@ paths:
       responses:
         "200":
           description: API healthy
+  /api/v1/health/ready:
+    get:
+      operationId: getReadiness
+      responses:
+        "200":
+          description: API ready
+        "503":
+          description: Dependency unavailable
   /api/v1/auth/signup:
     post:
       operationId: signup
@@ -233,6 +241,12 @@ paths:
   /api/v1/internal/notifications/reminders:
     post:
       operationId: queueDeadlineReminders
+      parameters:
+        - name: X-Dispatch-Token
+          in: header
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Reminders queued
@@ -242,6 +256,11 @@ paths:
     post:
       operationId: dispatchNotifications
       parameters:
+        - name: X-Dispatch-Token
+          in: header
+          required: true
+          schema:
+            type: string
         - name: limit
           in: query
           required: false

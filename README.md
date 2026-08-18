@@ -61,6 +61,10 @@ cd backend && go test ./...
 - `POST /api/v1/internal/notifications/reminders`
 - `POST /api/v1/internal/notifications/dispatch`
 
+## Readiness endpoint
+
+- `GET /api/v1/health/ready`
+
 ## Environment model
 
 - `dev` branch deploys to staging infrastructure and staging Supabase
@@ -79,3 +83,9 @@ Set these GitHub repository secrets for staging automation:
 - `STAGING_API_BASE_URL`
 - `RENDER_STAGING_DEPLOY_HOOK`
 - `STAGING_NOTIFICATION_DISPATCH_TOKEN`
+
+Set Render environment values:
+
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL` (use `onboarding@resend.dev` for staging tests)
+- `NOTIFICATION_DISPATCH_TOKEN`

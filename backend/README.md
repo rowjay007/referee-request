@@ -36,3 +36,7 @@ Migration files are in `migrations/`.
 
 - `POST /api/v1/internal/notifications/reminders`
 - `POST /api/v1/internal/notifications/dispatch`
+
+## Readiness endpoint
+
+- `GET /api/v1/health/ready`

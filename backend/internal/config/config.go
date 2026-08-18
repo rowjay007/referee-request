@@ -43,7 +43,7 @@ func Load() (*Config, error) {
 		StorageProvider:    getEnv("STORAGE_PROVIDER", "local"),
 		StorageLocalRoot:   getEnv("STORAGE_LOCAL_ROOT", "./tmp/storage"),
 		ResendAPIKey:       getEnv("RESEND_API_KEY", ""),
-		ResendFromEmail:    getEnv("RESEND_FROM_EMAIL", ""),
+		ResendFromEmail:    getEnv("RESEND_FROM_EMAIL", "onboarding@resend.dev"),
 		DispatchToken:      getEnv("NOTIFICATION_DISPATCH_TOKEN", "dev-notification-dispatch-token"),
 	}
 

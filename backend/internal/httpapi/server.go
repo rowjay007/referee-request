@@ -23,9 +23,11 @@ import (
 func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.Handler, error) {
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
+	router.Use(requestIDResponseHeaderMiddleware)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(15 * time.Second))
+	router.Use(securityHeadersMiddleware)
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   cfg.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -53,9 +55,11 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 	}
 
 	router.Get("/health", handlers.Health)
+	router.Get("/health/ready", handlers.HealthReady(db))
 
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", handlers.Health)
+		r.Get("/health/ready", handlers.HealthReady(db))
 		r.Route("/auth", func(authRouter chi.Router) {
 			authRouter.Use(httprate.LimitByIP(10, time.Minute))
 			authRouter.Post("/signup", authHandler.Signup)
@@ -109,4 +113,25 @@ func requestLogMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			)
 		})
 	}
+}
+
+func requestIDResponseHeaderMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqID := middleware.GetReqID(r.Context())
+		if reqID != "" {
+			w.Header().Set("X-Request-ID", reqID)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+		next.ServeHTTP(w, r)
+	})
 }

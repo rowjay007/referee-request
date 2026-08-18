@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -45,7 +44,7 @@ func (h *ReferenceRequestHandler) Create(w http.ResponseWriter, r *http.Request)
 	}
 
 	payload := createReferenceRequestPayload{}
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := decodeJSONBody(r, &payload, 128*1024); err != nil {
 		response.ValidationError(w, map[string]any{"body": "Invalid JSON body."})
 		return
 	}
