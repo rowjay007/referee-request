@@ -2,14 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase";
+import { getAuthToken } from "@/lib/auth";
 
 export default function SigninPage() {
+  const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (getAuthToken()) {
+      router.replace("/dashboard");
+    }
+  }, [router]);
 
   async function handleGoogleSignIn() {
     setLoading(true);

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getAuthToken } from "@/lib/auth";
 
 type ToastState = {
   message: string;
@@ -15,6 +16,7 @@ type ToastState = {
 export default function Home() {
   const router = useRouter();
   const [toast, setToast] = useState<ToastState>(null);
+  const [isAuthenticated] = useState(() => Boolean(getAuthToken()));
 
   useEffect(() => {
     if (!toast) return;
@@ -45,10 +47,22 @@ export default function Home() {
             </a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={() => navigateWithToast("/signin", "Opening sign in...", "info")}>
-              Sign in
-            </Button>
-            <Button onClick={() => navigateWithToast("/signup", "Starting your request...", "success")}>
+            {isAuthenticated ? (
+              <Button variant="secondary" onClick={() => navigateWithToast("/dashboard", "Opening your dashboard...", "info")}>
+                Dashboard
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => navigateWithToast("/signin", "Opening sign in...", "info")}>
+                Sign in
+              </Button>
+            )}
+            <Button
+              onClick={() =>
+                isAuthenticated
+                  ? navigateWithToast("/dashboard/requests/new", "Opening request builder...", "success")
+                  : navigateWithToast("/signup", "Starting your request...", "success")
+              }
+            >
               Start a request
             </Button>
           </div>
@@ -70,7 +84,9 @@ export default function Home() {
                 size="lg"
                 className="rounded-full px-6"
                 onClick={() =>
-                  navigateWithToast("/signup", "Redirecting to Google sign up...", "success")
+                  isAuthenticated
+                    ? navigateWithToast("/dashboard/requests/new", "Opening request builder...", "success")
+                    : navigateWithToast("/signup", "Redirecting to Google sign up...", "success")
                 }
               >
                 <span className="inline-flex items-center gap-2">

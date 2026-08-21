@@ -1,3 +1,5 @@
+import { clearAuthToken } from "@/lib/auth";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 type RequestOptions = {
@@ -36,10 +38,19 @@ export async function apiRequest<T>(
           : undefined,
   });
 
-  const payload = await response.json();
+  let payload: { error?: { message?: string }; data?: unknown } | null = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthToken();
+      throw new Error("Session expired. Please sign in again.");
+    }
     throw new Error(payload?.error?.message ?? "API request failed.");
   }
 
-  return payload.data as T;
+  return payload?.data as T;
 }
