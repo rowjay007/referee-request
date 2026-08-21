@@ -65,6 +65,11 @@ export default function Home() {
             >
               Start a request
             </Button>
+            {isAuthenticated ? (
+              <Button variant="secondary" onClick={() => navigateWithToast("/signout", "Signing you out...", "info")}>
+                Sign out
+              </Button>
+            ) : null}
           </div>
         </header>
 
@@ -244,6 +249,56 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="grid gap-4 pb-12 lg:grid-cols-[1.25fr_0.75fr]">
+          <article className="rr-tilt-3d rounded-3xl border border-border bg-surface p-6 sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Confidence board</p>
+            <h3 className="mt-3 text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
+              Calm visibility from first ask to final reference.
+            </h3>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-border bg-background/75 p-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-primary">Signal</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">Opened</p>
+              </div>
+              <div className="rounded-xl border border-border bg-background/75 p-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-primary">Signal</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">Pending</p>
+              </div>
+              <div className="rounded-xl border border-border bg-background/75 p-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-primary">Signal</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">Submitted</p>
+              </div>
+            </div>
+          </article>
+          <article className="rr-tilt-3d relative overflow-hidden rounded-3xl border border-border bg-[#f8f2e8] p-6">
+            <span className="pointer-events-none absolute -right-10 -top-8 h-28 w-28 rounded-full bg-primary/15" />
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Zero friction</p>
+            <p className="mt-3 text-3xl font-semibold leading-tight text-foreground">
+              Referees stay account-free.
+            </p>
+            <p className="mt-3 text-base text-muted">Open link. Upload file. Submit.</p>
+          </article>
+        </section>
+
+        <section className="grid gap-4 pb-12 sm:grid-cols-2 lg:grid-cols-4">
+          <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-primary">Academic</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">University</p>
+          </article>
+          <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-primary">Funding</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">Scholarship</p>
+          </article>
+          <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-primary">Career</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">Employment</p>
+          </article>
+          <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-primary">Professional</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">Membership</p>
+          </article>
+        </section>
+
         <section className="rounded-3xl bg-secondary px-8 py-12 text-white sm:px-10">
           <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">
             Your next application deserves this
@@ -281,9 +336,15 @@ export default function Home() {
               <a href="#why" className="transition-colors hover:text-foreground">
                 Why it works
               </a>
-              <Link href="/signin" className="transition-colors hover:text-foreground">
-                Google sign in
-              </Link>
+              {isAuthenticated ? (
+                <Link href="/signout" className="transition-colors hover:text-foreground">
+                  Sign out
+                </Link>
+              ) : (
+                <Link href="/signin" className="transition-colors hover:text-foreground">
+                  Google sign in
+                </Link>
+              )}
               <a href="mailto:hello@refereerequest.com" className="transition-colors hover:text-foreground">
                 hello@refereerequest.com
               </a>
