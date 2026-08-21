@@ -82,7 +82,6 @@ Set these GitHub repository secrets for staging automation:
 - `STAGING_SUPABASE_PROJECT_ID`
 - `STAGING_API_BASE_URL`
 - `STAGING_RENDER_SERVICE_ID`
-- `STAGING_NOTIFICATION_DISPATCH_TOKEN`
 
 Set these GitHub repository secrets for production automation:
 
@@ -104,6 +103,10 @@ Set Render environment values:
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL` (use `onboarding@resend.dev` for staging tests)
 - `NOTIFICATION_DISPATCH_TOKEN`
+- `NOTIFICATION_WORKER_ENABLED` (`true` on production, `false` on staging)
+- `NOTIFICATION_DISPATCH_INTERVAL` (for example `45s`)
+- `NOTIFICATION_REMINDER_INTERVAL` (for example `30m`)
+- `NOTIFICATION_DISPATCH_BATCH_LIMIT` (for example `50`)
 
 Optional (only when re-enabling Google auth later): backend Supabase environment values:
 

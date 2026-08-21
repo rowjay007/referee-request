@@ -12,6 +12,8 @@ import (
 	"github.com/rowjay007/referee-request/backend/internal/config"
 	"github.com/rowjay007/referee-request/backend/internal/database"
 	"github.com/rowjay007/referee-request/backend/internal/httpapi"
+	"github.com/rowjay007/referee-request/backend/internal/notification"
+	"github.com/rowjay007/referee-request/backend/internal/store"
 	"github.com/rowjay007/referee-request/backend/internal/telemetry"
 )
 
@@ -47,6 +49,32 @@ func main() {
 		os.Exit(1)
 	}
 
+	var notificationWorkerCancel context.CancelFunc
+	if cfg.NotificationWorkerEnabled {
+		notificationStore := store.NewReferenceRequestStore(dbPool)
+		notificationSender := notification.NewResendSender(cfg.ResendAPIKey)
+		notificationService, err := notification.NewService(logger, notificationStore, notificationSender, cfg.ResendFromEmail)
+		if err != nil {
+			logger.Error("notification service setup failed", "error", err)
+			os.Exit(1)
+		}
+
+		worker := notification.NewWorker(
+			logger,
+			notificationService,
+			cfg.ReminderLeadHours,
+			cfg.NotificationDispatchInterval,
+			cfg.NotificationReminderInterval,
+			cfg.NotificationDispatchBatchLimit,
+		)
+
+		var workerCtx context.Context
+		workerCtx, notificationWorkerCancel = context.WithCancel(context.Background())
+		go worker.Run(workerCtx)
+	} else {
+		logger.Info("notification worker disabled", "env", cfg.Environment)
+	}
+
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           handler,
@@ -64,6 +92,10 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
+
+	if notificationWorkerCancel != nil {
+		notificationWorkerCancel()
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
