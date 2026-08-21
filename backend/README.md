@@ -38,6 +38,9 @@ CI workflows run `migrate up` automatically on `dev` (staging) and `main` (produ
 - `POST /api/v1/internal/notifications/reminders`
 - `POST /api/v1/internal/notifications/dispatch`
 
+Notification processing now runs in-process on the backend when `NOTIFICATION_WORKER_ENABLED=true`.
+Use internal endpoints only for manual/admin dispatch control.
+
 ## Social auth endpoint
 
 - `POST /api/v1/auth/google`

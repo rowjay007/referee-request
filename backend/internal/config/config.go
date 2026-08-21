@@ -5,29 +5,34 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Environment        string
-	Port               string
-	BaseURL            string
-	FrontendBaseURL    string
-	SupabaseURL        string
-	SupabaseAnonKey    string
-	DatabaseURL        string
-	JWTSecret          string
-	JWTTTLMin          int
-	OTELExporter       string
-	CORSAllowedOrigins []string
-	StorageProvider    string
-	StorageLocalRoot   string
-	UploadMaxBytes     int64
-	ResendAPIKey       string
-	ResendFromEmail    string
-	ReminderLeadHours  int
-	DispatchToken      string
+	Environment                    string
+	Port                           string
+	BaseURL                        string
+	FrontendBaseURL                string
+	SupabaseURL                    string
+	SupabaseAnonKey                string
+	DatabaseURL                    string
+	JWTSecret                      string
+	JWTTTLMin                      int
+	OTELExporter                   string
+	CORSAllowedOrigins             []string
+	StorageProvider                string
+	StorageLocalRoot               string
+	UploadMaxBytes                 int64
+	ResendAPIKey                   string
+	ResendFromEmail                string
+	ReminderLeadHours              int
+	DispatchToken                  string
+	NotificationWorkerEnabled      bool
+	NotificationDispatchInterval   time.Duration
+	NotificationReminderInterval   time.Duration
+	NotificationDispatchBatchLimit int
 }
 
 func Load() (*Config, error) {
@@ -71,6 +76,35 @@ func Load() (*Config, error) {
 		return nil, errors.New("REMINDER_LEAD_HOURS must be a positive integer")
 	}
 	cfg.ReminderLeadHours = leadHours
+
+	enabledDefault := cfg.Environment == "production"
+	enabledRaw := getEnv("NOTIFICATION_WORKER_ENABLED", strconv.FormatBool(enabledDefault))
+	enabled, err := strconv.ParseBool(enabledRaw)
+	if err != nil {
+		return nil, errors.New("NOTIFICATION_WORKER_ENABLED must be true or false")
+	}
+	cfg.NotificationWorkerEnabled = enabled
+
+	dispatchIntervalRaw := getEnv("NOTIFICATION_DISPATCH_INTERVAL", "45s")
+	dispatchInterval, err := time.ParseDuration(dispatchIntervalRaw)
+	if err != nil || dispatchInterval <= 0 {
+		return nil, errors.New("NOTIFICATION_DISPATCH_INTERVAL must be a positive duration (for example 30s or 1m)")
+	}
+	cfg.NotificationDispatchInterval = dispatchInterval
+
+	reminderIntervalRaw := getEnv("NOTIFICATION_REMINDER_INTERVAL", "30m")
+	reminderInterval, err := time.ParseDuration(reminderIntervalRaw)
+	if err != nil || reminderInterval <= 0 {
+		return nil, errors.New("NOTIFICATION_REMINDER_INTERVAL must be a positive duration (for example 15m or 1h)")
+	}
+	cfg.NotificationReminderInterval = reminderInterval
+
+	batchLimitRaw := getEnv("NOTIFICATION_DISPATCH_BATCH_LIMIT", "50")
+	batchLimit, err := strconv.Atoi(batchLimitRaw)
+	if err != nil || batchLimit <= 0 || batchLimit > 200 {
+		return nil, errors.New("NOTIFICATION_DISPATCH_BATCH_LIMIT must be between 1 and 200")
+	}
+	cfg.NotificationDispatchBatchLimit = batchLimit
 
 	if cfg.DatabaseURL == "" {
 		return nil, errors.New("DATABASE_URL is required")

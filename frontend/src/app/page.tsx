@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, Minus, Plus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type ToastState = {
@@ -12,30 +12,9 @@ type ToastState = {
   type: "info" | "success";
 } | null;
 
-type FaqItem = {
-  question: string;
-  answer: string;
-};
-
-const FAQ_ITEMS: FaqItem[] = [
-  {
-    question: "Do referees need an account?",
-    answer: "No. They use a private link and submit directly.",
-  },
-  {
-    question: "What can I use it for?",
-    answer: "Universities, scholarships, fellowships, jobs, and internships.",
-  },
-  {
-    question: "Are files protected?",
-    answer: "Yes. Access is scoped to each request through secure tokens.",
-  },
-];
-
 export default function Home() {
   const router = useRouter();
   const [toast, setToast] = useState<ToastState>(null);
-  const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   useEffect(() => {
     if (!toast) return;
@@ -64,9 +43,6 @@ export default function Home() {
             <a href="#why" className="transition-colors hover:text-foreground">
               Why it works
             </a>
-            <a href="#faq" className="transition-colors hover:text-foreground">
-              FAQ
-            </a>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="secondary" onClick={() => navigateWithToast("/signin", "Opening sign in...", "info")}>
@@ -86,8 +62,8 @@ export default function Home() {
               The clean way to
               <span className="mt-1 block">get a reference.</span>
             </h1>
-            <p className="mt-8 max-w-xl text-2xl leading-relaxed text-muted">
-              Create once, share one secure link, and track each step clearly.
+            <p className="mt-8 max-w-xl text-xl leading-relaxed text-muted">
+              Create once, share one secure link, track the outcome.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button
@@ -146,7 +122,7 @@ export default function Home() {
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-lg font-semibold text-foreground">Prof. Okafor</p>
+                    <p className="text-lg font-semibold text-foreground">Dr. Hart</p>
                     <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
@@ -158,7 +134,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-lg font-semibold text-foreground">Dr. Mensah</p>
+                    <p className="text-lg font-semibold text-foreground">J. Cole</p>
                     <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
@@ -170,7 +146,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-lg font-semibold text-foreground">A. Williams</p>
+                    <p className="text-lg font-semibold text-foreground">L. Smith</p>
                     <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
@@ -200,19 +176,19 @@ export default function Home() {
                 <span className="pointer-events-none absolute -right-5 -top-5 h-16 w-16 rounded-full bg-primary/10" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">01</p>
                 <p className="mt-3 text-4xl font-semibold text-foreground">One source</p>
-                <p className="mt-3 text-xl leading-relaxed text-muted">Context, files, and deadline stay together.</p>
+                <p className="mt-3 text-lg leading-relaxed text-muted">Context, files, deadline together.</p>
               </article>
               <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "120ms" }}>
                 <span className="pointer-events-none absolute -left-6 bottom-2 h-14 w-14 rounded-2xl border border-primary/30" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">02</p>
                 <p className="mt-3 text-4xl font-semibold text-foreground">Clear signals</p>
-                <p className="mt-3 text-xl leading-relaxed text-muted">Know what is opened, pending, or done.</p>
+                <p className="mt-3 text-lg leading-relaxed text-muted">Know opened, pending, done.</p>
               </article>
               <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "220ms" }}>
                 <span className="pointer-events-none absolute -right-7 bottom-3 h-16 w-16 rounded-full border border-primary/35" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">03</p>
                 <p className="mt-3 text-4xl font-semibold text-foreground">Human-friendly</p>
-                <p className="mt-3 text-xl leading-relaxed text-muted">Referees submit without onboarding friction.</p>
+                <p className="mt-3 text-lg leading-relaxed text-muted">Referees submit without friction.</p>
               </article>
             </div>
           </div>
@@ -228,19 +204,16 @@ export default function Home() {
                 </h2>
                 <p className="mt-5 max-w-2xl text-xl leading-relaxed text-muted">Three moves. One clear workflow.</p>
               </div>
-              <div className="space-y-3">
-                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/80 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step 1</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">Build one complete request</p>
-                </article>
-                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/80 p-4 sm:translate-x-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step 2</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">Send one secure referee link</p>
-                </article>
-                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/80 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Step 3</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">Track status until submission</p>
-                </article>
+              <div className="flex flex-wrap gap-3 lg:justify-end">
+                <span className="rr-tilt-3d rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground">
+                  Build request
+                </span>
+                <span className="rr-tilt-3d rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground">
+                  Send link
+                </span>
+                <span className="rr-tilt-3d rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground">
+                  Track status
+                </span>
               </div>
             </div>
           </div>
@@ -266,39 +239,6 @@ export default function Home() {
               <ArrowRight className="h-4 w-4" />
             </span>
           </Button>
-        </section>
-
-        <section id="faq" className="grid gap-8 py-12 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">FAQ</p>
-            <h2 className="mt-4 text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-6xl">
-              Good questions.
-              <br />
-              Straight answers.
-            </h2>
-          </div>
-          <div className="space-y-1 border-t border-border">
-            {FAQ_ITEMS.map((item, index) => {
-              const isOpen = openFaqIndex === index;
-              return (
-                <article key={item.question} className="border-b border-border py-5">
-                  <button
-                    className="flex w-full items-center justify-between gap-4 text-left"
-                    onClick={() => setOpenFaqIndex(isOpen ? -1 : index)}
-                    type="button"
-                  >
-                    <span className="text-2xl font-semibold text-foreground">{item.question}</span>
-                    {isOpen ? (
-                      <Minus className="h-5 w-5 text-primary" />
-                    ) : (
-                      <Plus className="h-5 w-5 text-primary" />
-                    )}
-                  </button>
-                  {isOpen ? <p className="mt-4 text-xl leading-relaxed text-muted">{item.answer}</p> : null}
-                </article>
-              );
-            })}
-          </div>
         </section>
 
         <footer className="border-t border-border py-8 text-sm text-muted">
