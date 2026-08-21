@@ -55,7 +55,7 @@ export default function AuthCallbackPage() {
 
         if (!cancelled) {
           setStatus("Redirecting to your dashboard...");
-          router.replace("/dashboard/requests");
+          router.replace("/dashboard");
         }
       } catch (err) {
         if (!cancelled) {
@@ -73,14 +73,16 @@ export default function AuthCallbackPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-6 px-6 py-10">
       <article className="space-y-5 rounded-2xl border border-border bg-surface/95 p-7 text-center shadow-lg shadow-primary/10 backdrop-blur">
-        <Image
-          src="/referee-request-logo.svg"
-          alt="RefereeRequest"
-          width={180}
-          height={40}
-          className="mx-auto"
-          priority
-        />
+        <Link href="/" className="mx-auto block w-fit" aria-label="Go to RefereeRequest home">
+          <Image
+            src="/referee-request-logo.svg"
+            alt="RefereeRequest"
+            width={56}
+            height={56}
+            className="mx-auto"
+            priority
+          />
+        </Link>
         <h1 className="text-2xl font-semibold text-foreground">Google sign in</h1>
         {!error ? <p className="text-sm text-muted">{status}</p> : null}
         {error ? (
