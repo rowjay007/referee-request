@@ -161,33 +161,41 @@ export default function Home() {
           </article>
         </section>
 
-        <section id="why" className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_1.95fr]">
-            <div>
+        <section id="why" className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8">
+          <span className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-primary/8 blur-2xl" />
+          <div className="grid gap-6 lg:grid-cols-[1fr_1.65fr]">
+            <article className="rr-tilt-3d rr-motion-rise relative rounded-2xl border border-border bg-background/80 p-6">
+              <span className="pointer-events-none absolute -right-6 bottom-4 h-14 w-14 rounded-full border border-primary/30" />
               <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The shift</p>
               <h2 className="mt-4 text-5xl font-semibold leading-[0.95] tracking-tight text-foreground">
                 Less follow-up.
                 <br />
                 More forward motion.
               </h2>
-            </div>
+            </article>
             <div className="grid gap-4 sm:grid-cols-3">
-              <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-background/70 p-5">
-                <span className="pointer-events-none absolute -right-5 -top-5 h-16 w-16 rounded-full bg-primary/10" />
+              <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5">
+                <span className="pointer-events-none absolute -right-5 -top-5 h-16 w-16 rounded-full bg-primary/14" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">01</p>
-                <p className="mt-3 text-4xl font-semibold text-foreground">One source</p>
+                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">One source</p>
                 <p className="mt-3 text-lg leading-relaxed text-muted">Context, files, deadline together.</p>
               </article>
-              <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "120ms" }}>
+              <article
+                className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5"
+                style={{ animationDelay: "120ms" }}
+              >
                 <span className="pointer-events-none absolute -left-6 bottom-2 h-14 w-14 rounded-2xl border border-primary/30" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">02</p>
-                <p className="mt-3 text-4xl font-semibold text-foreground">Clear signals</p>
+                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">Clear signals</p>
                 <p className="mt-3 text-lg leading-relaxed text-muted">Know opened, pending, done.</p>
               </article>
-              <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-background/70 p-5" style={{ animationDelay: "220ms" }}>
+              <article
+                className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5"
+                style={{ animationDelay: "220ms" }}
+              >
                 <span className="pointer-events-none absolute -right-7 bottom-3 h-16 w-16 rounded-full border border-primary/35" />
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">03</p>
-                <p className="mt-3 text-4xl font-semibold text-foreground">Human-friendly</p>
+                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">Human-friendly</p>
                 <p className="mt-3 text-lg leading-relaxed text-muted">Referees submit without friction.</p>
               </article>
             </div>
@@ -195,8 +203,9 @@ export default function Home() {
         </section>
 
         <section id="how-it-works" className="py-12">
-          <div className="rounded-3xl border border-border bg-surface p-6 sm:p-8">
-            <div className="grid gap-7 lg:grid-cols-[1.12fr_0.88fr] lg:items-end">
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8">
+            <span className="pointer-events-none absolute -left-8 -top-8 h-32 w-32 rounded-full bg-secondary/8 blur-2xl" />
+            <div className="grid gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The method</p>
                 <h2 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-7xl">
@@ -204,16 +213,16 @@ export default function Home() {
                 </h2>
                 <p className="mt-5 max-w-2xl text-xl leading-relaxed text-muted">Three moves. One clear workflow.</p>
               </div>
-              <div className="flex flex-wrap gap-3 lg:justify-end">
-                <span className="rr-tilt-3d rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground">
-                  Build request
-                </span>
-                <span className="rr-tilt-3d rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground">
-                  Send link
-                </span>
-                <span className="rr-tilt-3d rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground">
-                  Track status
-                </span>
+              <div className="grid gap-3">
+                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3">
+                  <p className="text-sm font-semibold text-foreground">Build request</p>
+                </article>
+                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3 sm:translate-x-6">
+                  <p className="text-sm font-semibold text-foreground">Send secure link</p>
+                </article>
+                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3">
+                  <p className="text-sm font-semibold text-foreground">Track status</p>
+                </article>
               </div>
             </div>
           </div>
