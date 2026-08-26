@@ -8,7 +8,15 @@ export type ReferenceRequest = {
   opportunityType: string;
   deadlineAt: string;
   instructions: string;
-  status: "draft" | "sent" | "opened" | "submitted" | "cancelled" | "expired";
+  status:
+    | "draft"
+    | "sent"
+    | "opened"
+    | "accepted"
+    | "declined"
+    | "submitted"
+    | "cancelled"
+    | "expired";
   sentAt: string | null;
   openedAt: string | null;
   submittedAt: string | null;
@@ -30,6 +38,14 @@ export function statusMessage(request: ReferenceRequest) {
     return `${request.refereeName} has opened your request.`;
   }
 
+  if (request.status === "accepted") {
+    return `${request.refereeName} accepted your request and has not submitted yet.`;
+  }
+
+  if (request.status === "declined") {
+    return `${request.refereeName} declined this request.`;
+  }
+
   if (request.status === "sent") {
     return `${request.refereeName} has not opened your request yet.`;
   }
@@ -49,7 +65,9 @@ export function statusMessage(request: ReferenceRequest) {
   return "Status updated.";
 }
 
-export function statusPresentation(request: ReferenceRequest): RequestStatusPresentation {
+export function statusPresentation(
+  request: ReferenceRequest,
+): RequestStatusPresentation {
   if (request.status === "submitted" && request.submittedAt) {
     return {
       heading: "Reference submitted",
@@ -61,7 +79,23 @@ export function statusPresentation(request: ReferenceRequest): RequestStatusPres
   if (request.status === "opened") {
     return {
       heading: `Waiting for ${request.refereeName}`,
-      detail: `${request.refereeName} opened your request and has not submitted yet.`,
+      detail: `${request.refereeName} opened your request and has not decided yet.`,
+      tone: "warning",
+    };
+  }
+
+  if (request.status === "accepted") {
+    return {
+      heading: `Accepted by ${request.refereeName}`,
+      detail: `${request.refereeName} accepted your request and has not submitted yet.`,
+      tone: "warning",
+    };
+  }
+
+  if (request.status === "declined") {
+    return {
+      heading: `Declined by ${request.refereeName}`,
+      detail: `${request.refereeName} declined your request. Choose another referee to stay on track.`,
       tone: "warning",
     };
   }
@@ -98,7 +132,11 @@ export function statusPresentation(request: ReferenceRequest): RequestStatusPres
     };
   }
 
-  return { heading: "Status updated", detail: "Request status changed.", tone: "neutral" };
+  return {
+    heading: "Status updated",
+    detail: "Request status changed.",
+    tone: "neutral",
+  };
 }
 
 export function daysUntilDeadline(deadlineAt: string) {
@@ -110,7 +148,8 @@ export function daysUntilDeadline(deadlineAt: string) {
 
 export function deadlineLabel(deadlineAt: string) {
   const days = daysUntilDeadline(deadlineAt);
-  if (days < 0) return `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue`;
+  if (days < 0)
+    return `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue`;
   if (days === 0) return "Due today";
   if (days === 1) return "Due in 1 day";
   return `Due in ${days} days`;

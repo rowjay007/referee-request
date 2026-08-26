@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { getAuthToken } from "@/lib/auth";
+import { getSupabaseClient } from "@/lib/supabase";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
-import { Button } from "@/components/ui/button";
-import { getSupabaseClient } from "@/lib/supabase";
-import { getAuthToken } from "@/lib/auth";
+import { useEffect, useState } from "react";
 
 export default function SigninPage() {
   const router = useRouter();
@@ -25,7 +25,7 @@ export default function SigninPage() {
     setError("");
 
     try {
-      posthog.capture("google_auth_started");
+      posthog.capture("signup_started");
       const supabase = getSupabaseClient();
       const redirectTo = `${window.location.origin.replace(/\/$/, "")}/auth/callback`;
       const { error: authError } = await supabase.auth.signInWithOAuth({
@@ -45,7 +45,11 @@ export default function SigninPage() {
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-6 px-6 py-10">
       <article className="space-y-6 rounded-2xl border border-border bg-surface/95 p-7 shadow-lg shadow-primary/10 backdrop-blur">
         <div className="space-y-4 text-center">
-          <Link href="/" className="mx-auto block w-fit" aria-label="Go to RefereeRequest home">
+          <Link
+            href="/"
+            className="mx-auto block w-fit"
+            aria-label="Go to RefereeRequest home"
+          >
             <Image
               src="/referee-request-logo.svg"
               alt="RefereeRequest"
@@ -55,11 +59,15 @@ export default function SigninPage() {
               priority
             />
           </Link>
-          <h1 className="text-2xl font-semibold text-foreground">Sign in with Google</h1>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Sign in with Google
+          </h1>
           <p className="text-sm text-muted">
             One tap sign in, then create and track reference requests.
           </p>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted">References, without the chasing.</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted">
+            References, without the chasing.
+          </p>
         </div>
         <Button
           disabled={loading}
@@ -68,7 +76,9 @@ export default function SigninPage() {
         >
           {loading ? "Redirecting to Google..." : "Continue with Google"}
         </Button>
-        {error ? <p className="text-center text-sm text-error">{error}</p> : null}
+        {error ? (
+          <p className="text-center text-sm text-error">{error}</p>
+        ) : null}
       </article>
       <div className="text-center">
         <p className="text-sm text-muted">

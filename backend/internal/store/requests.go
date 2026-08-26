@@ -3,16 +3,19 @@ package store
 import (
 	"context"
 	"errors"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"time"
 )
 
 var ErrReferenceRequestNotFound = errors.New("reference request not found")
 var ErrReferenceRequestAlreadySent = errors.New("reference request already sent")
+var ErrReferenceRequestReminderNotAllowed = errors.New("reference request reminder not allowed")
+var ErrReferenceRequestReminderCooldown = errors.New("reference request reminder cooldown")
+var ErrReferenceRequestThankYouNotAllowed = errors.New("reference request thank you not allowed")
+var ErrReferenceRequestThankYouCooldown = errors.New("reference request thank you cooldown")
 
 type ReferenceRequest struct {
 	ID                  uuid.UUID
@@ -55,6 +58,15 @@ type SupportingDocument struct {
 	FileExtension    string
 	ContentType      string
 	SizeBytes        int64
+	CreatedAt        time.Time
+}
+
+type ReferenceRequestEvent struct {
+	ID               uuid.UUID
+	ReferenceRequest uuid.UUID
+	EventType        string
+	ActorUserID      *uuid.UUID
+	Metadata         []byte
 	CreatedAt        time.Time
 }
 
@@ -263,6 +275,42 @@ func (s *ReferenceRequestStore) ListSupportingDocuments(ctx context.Context, ref
 		return nil, err
 	}
 	return documents, nil
+}
+
+func (s *ReferenceRequestStore) ListReferenceRequestEvents(ctx context.Context, referenceRequestID, candidateUserID uuid.UUID) ([]ReferenceRequestEvent, error) {
+	const query = `
+		SELECT e.id, e.reference_request_id, e.event_type, e.actor_user_id, e.metadata, e.created_at
+		FROM reference_request_events e
+		INNER JOIN reference_requests r ON r.id = e.reference_request_id
+		WHERE e.reference_request_id = $1 AND r.candidate_user_id = $2
+		ORDER BY e.created_at DESC
+	`
+
+	rows, err := s.db.Query(ctx, query, referenceRequestID, candidateUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	events := make([]ReferenceRequestEvent, 0)
+	for rows.Next() {
+		event := ReferenceRequestEvent{}
+		if err := rows.Scan(
+			&event.ID,
+			&event.ReferenceRequest,
+			&event.EventType,
+			&event.ActorUserID,
+			&event.Metadata,
+			&event.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return events, nil
 }
 
 type referenceRequestScanner interface {

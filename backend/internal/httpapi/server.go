@@ -2,10 +2,6 @@ package httpapi
 
 import (
 	"errors"
-	"log/slog"
-	"net/http"
-	"time"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -18,6 +14,9 @@ import (
 	"github.com/rowjay007/referee-request/backend/internal/storage"
 	"github.com/rowjay007/referee-request/backend/internal/store"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"log/slog"
+	"net/http"
+	"time"
 )
 
 func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.Handler, error) {
@@ -74,7 +73,11 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 			requestRouter.Get("/", requestHandler.List)
 			requestRouter.Post("/", requestHandler.Create)
 			requestRouter.Get("/{requestId}", requestHandler.Get)
+			requestRouter.Get("/{requestId}/events", requestHandler.Events)
+			requestRouter.Get("/{requestId}/readiness", requestHandler.Readiness)
 			requestRouter.Post("/{requestId}/send", requestHandler.Send)
+			requestRouter.Post("/{requestId}/reminder", requestHandler.Reminder)
+			requestRouter.Post("/{requestId}/thank-you", requestHandler.ThankYou)
 			requestRouter.Get("/{requestId}/documents", documentHandler.List)
 			requestRouter.Post("/{requestId}/documents", documentHandler.Upload)
 		})
@@ -82,6 +85,7 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 		r.Route("/referee", func(refereeRouter chi.Router) {
 			refereeRouter.Use(httprate.LimitByIP(30, time.Minute))
 			refereeRouter.Get("/{token}", refereeHandler.GetRequest)
+			refereeRouter.Post("/{token}/decision", refereeHandler.Decide)
 			refereeRouter.Get("/{token}/documents/{documentId}", refereeHandler.DownloadDocument)
 			refereeRouter.Post("/{token}/submit", refereeHandler.SubmitReference)
 		})

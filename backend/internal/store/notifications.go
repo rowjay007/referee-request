@@ -2,10 +2,10 @@ package store
 
 import (
 	"context"
-	"time"
-
+	"errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"time"
 )
 
 type NotificationOutboxItem struct {
@@ -203,4 +203,190 @@ func (s *ReferenceRequestStore) QueueDeadlineReminders(ctx context.Context, lead
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+func (s *ReferenceRequestStore) QueueManualReminderForCandidate(ctx context.Context, requestID, candidateUserID uuid.UUID) error {
+	result, err := s.db.Exec(
+		ctx,
+		`
+		INSERT INTO notification_outbox (
+		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
+		)
+		SELECT
+		    r.id,
+		    'manual_reminder',
+		    'email',
+		    r.referee_email,
+		    r.referee_name,
+		    ('Reminder: Reference requested by ' || u.full_name),
+		    (
+		      '<div style="font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;">' ||
+		      '<h2 style="margin:0 0 12px;">Reference reminder</h2>' ||
+		      '<p>Hello ' || r.referee_name || ',</p>' ||
+		      '<p>This is a reminder from RefereeRequest for the reference request by <strong>' || u.full_name || '</strong>.</p>' ||
+		      '<p><strong>Institution/Company:</strong> ' || r.institution_name || '<br />' ||
+		      '<strong>Programme/Role:</strong> ' || r.programme_name || '<br />' ||
+		      '<strong>Deadline:</strong> ' || to_char(r.deadline_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI UTC') || '</p>' ||
+		      '<p>Please use your secure request link in your inbox to continue.</p>' ||
+		      '</div>'
+		    ),
+		    'queued',
+		    0,
+		    5,
+		    NOW()
+		FROM reference_requests r
+		INNER JOIN users u ON u.id = r.candidate_user_id
+		INNER JOIN referee_invitations ri ON ri.reference_request_id = r.id
+		WHERE r.id = $1
+		  AND r.candidate_user_id = $2
+		  AND r.status IN ('sent', 'opened', 'accepted')
+		  AND r.deadline_at > NOW()
+		  AND ri.expires_at > NOW()
+		  AND ri.revoked_at IS NULL
+		  AND ri.submitted_at IS NULL
+		  AND NOT EXISTS (
+		      SELECT 1
+		      FROM notification_outbox n
+		      WHERE n.reference_request_id = r.id
+		        AND n.notification_type IN ('manual_reminder', 'deadline_reminder')
+		        AND n.created_at >= NOW() - interval '6 hours'
+		  )`,
+		requestID,
+		candidateUserID,
+	)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() > 0 {
+		return nil
+	}
+
+	var status string
+	err = s.db.QueryRow(
+		ctx,
+		`SELECT status FROM reference_requests WHERE id = $1 AND candidate_user_id = $2 LIMIT 1`,
+		requestID,
+		candidateUserID,
+	).Scan(&status)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrReferenceRequestNotFound
+		}
+		return err
+	}
+
+	if status != "sent" && status != "opened" && status != "accepted" {
+		return ErrReferenceRequestReminderNotAllowed
+	}
+
+	var hasRecentReminder bool
+	err = s.db.QueryRow(
+		ctx,
+		`SELECT EXISTS (
+			SELECT 1
+			FROM notification_outbox n
+			WHERE n.reference_request_id = $1
+			  AND n.notification_type IN ('manual_reminder', 'deadline_reminder')
+			  AND n.created_at >= NOW() - interval '6 hours'
+		)`,
+		requestID,
+	).Scan(&hasRecentReminder)
+	if err != nil {
+		return err
+	}
+	if hasRecentReminder {
+		return ErrReferenceRequestReminderCooldown
+	}
+
+	return ErrReferenceRequestReminderNotAllowed
+}
+
+func (s *ReferenceRequestStore) QueueThankYouForCandidate(ctx context.Context, requestID, candidateUserID uuid.UUID) error {
+	result, err := s.db.Exec(
+		ctx,
+		`
+		INSERT INTO notification_outbox (
+		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
+		)
+		SELECT
+		    r.id,
+		    'candidate_thank_you',
+		    'email',
+		    r.referee_email,
+		    r.referee_name,
+		    ('Thank you from ' || u.full_name),
+		    (
+		      '<div style="font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;">' ||
+		      '<h2 style="margin:0 0 12px;">Thank you</h2>' ||
+		      '<p>Hello ' || r.referee_name || ',</p>' ||
+		      '<p>' || u.full_name || ' asked us to share a thank-you note for your completed reference.</p>' ||
+		      '<p><strong>Institution/Company:</strong> ' || r.institution_name || '<br />' ||
+		      '<strong>Programme/Role:</strong> ' || r.programme_name || '</p>' ||
+		      '<p>Thank you for your time and support.</p>' ||
+		      '</div>'
+		    ),
+		    'queued',
+		    0,
+		    5,
+		    NOW()
+		FROM reference_requests r
+		INNER JOIN users u ON u.id = r.candidate_user_id
+		WHERE r.id = $1
+		  AND r.candidate_user_id = $2
+		  AND r.status = 'submitted'
+		  AND NOT EXISTS (
+		      SELECT 1
+		      FROM notification_outbox n
+		      WHERE n.reference_request_id = r.id
+		        AND n.notification_type = 'candidate_thank_you'
+		        AND n.created_at >= NOW() - interval '7 days'
+		  )`,
+		requestID,
+		candidateUserID,
+	)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() > 0 {
+		return nil
+	}
+
+	var status string
+	err = s.db.QueryRow(
+		ctx,
+		`SELECT status FROM reference_requests WHERE id = $1 AND candidate_user_id = $2 LIMIT 1`,
+		requestID,
+		candidateUserID,
+	).Scan(&status)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrReferenceRequestNotFound
+		}
+		return err
+	}
+
+	if status != "submitted" {
+		return ErrReferenceRequestThankYouNotAllowed
+	}
+
+	var hasRecentThankYou bool
+	err = s.db.QueryRow(
+		ctx,
+		`SELECT EXISTS (
+			SELECT 1
+			FROM notification_outbox n
+			WHERE n.reference_request_id = $1
+			  AND n.notification_type = 'candidate_thank_you'
+			  AND n.created_at >= NOW() - interval '7 days'
+		)`,
+		requestID,
+	).Scan(&hasRecentThankYou)
+	if err != nil {
+		return err
+	}
+	if hasRecentThankYou {
+		return ErrReferenceRequestThankYouCooldown
+	}
+
+	return ErrReferenceRequestThankYouNotAllowed
 }

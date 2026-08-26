@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
 import { apiRequest } from "@/lib/api";
 import { saveAuthToken } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
+import { useEffect, useState } from "react";
 
 type AuthResponse = {
   user: { id: string; email: string; fullName: string };
@@ -30,7 +30,8 @@ export default function AuthCallbackPage() {
           throw new Error("No auth code found in callback URL.");
         }
 
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        const { error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(code);
         if (exchangeError) {
           throw exchangeError;
         }
@@ -51,7 +52,7 @@ export default function AuthCallbackPage() {
           body: { accessToken },
         });
         saveAuthToken(authData.token);
-        posthog.capture("google_auth_completed");
+        posthog.capture("signup_completed");
 
         if (!cancelled) {
           setStatus("Redirecting to your dashboard...");
@@ -59,7 +60,9 @@ export default function AuthCallbackPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Google sign in failed.");
+          setError(
+            err instanceof Error ? err.message : "Google sign in failed.",
+          );
         }
       }
     }
@@ -73,7 +76,11 @@ export default function AuthCallbackPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-6 px-6 py-10">
       <article className="space-y-5 rounded-2xl border border-border bg-surface/95 p-7 text-center shadow-lg shadow-primary/10 backdrop-blur">
-        <Link href="/" className="mx-auto block w-fit" aria-label="Go to RefereeRequest home">
+        <Link
+          href="/"
+          className="mx-auto block w-fit"
+          aria-label="Go to RefereeRequest home"
+        >
           <Image
             src="/referee-request-logo.svg"
             alt="RefereeRequest"
@@ -83,7 +90,9 @@ export default function AuthCallbackPage() {
             priority
           />
         </Link>
-        <h1 className="text-2xl font-semibold text-foreground">Google sign in</h1>
+        <h1 className="text-2xl font-semibold text-foreground">
+          Google sign in
+        </h1>
         {!error ? <p className="text-sm text-muted">{status}</p> : null}
         {error ? (
           <p className="text-sm text-error">

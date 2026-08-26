@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
+import { useParams } from "next/navigation";
+import posthog from "posthog-js";
+import { FormEvent, useEffect, useState } from "react";
 
 type RefereeDocument = {
   id: string;
@@ -26,6 +26,8 @@ type RefereeRequestData = {
   deadlineAt: string;
   instructions: string;
   status: string;
+  decision: "accepted" | "declined" | null;
+  decidedAt: string | null;
   submittedAt: string | null;
   documents: RefereeDocument[];
 };
@@ -41,6 +43,14 @@ type SubmissionResponse = {
   };
 };
 
+type RefereeDecisionResponse = {
+  decision: {
+    status: string;
+    decision: "accepted" | "declined" | null;
+    decidedAt: string | null;
+  };
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 export default function RefereePage() {
@@ -51,6 +61,7 @@ export default function RefereePage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deciding, setDeciding] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -60,7 +71,8 @@ export default function RefereePage() {
     apiRequest<RefereeRequestResponse>(`/referee/${token}`)
       .then((data) => {
         setRequest(data.request);
-        posthog.capture("referee_link_opened");
+        posthog.capture("referee_request_opened");
+        posthog.capture("referee_context_viewed");
       })
       .catch((err: unknown) =>
         setError(
@@ -91,10 +103,13 @@ export default function RefereePage() {
     try {
       const payload = new FormData();
       payload.append("referenceFile", file);
-      const data = await apiRequest<SubmissionResponse>(`/referee/${token}/submit`, {
-        method: "POST",
-        body: payload,
-      });
+      const data = await apiRequest<SubmissionResponse>(
+        `/referee/${token}/submit`,
+        {
+          method: "POST",
+          body: payload,
+        },
+      );
       setMessage(
         `Reference submitted successfully on ${new Date(data.submission.submittedAt).toLocaleString()}.`,
       );
@@ -115,6 +130,56 @@ export default function RefereePage() {
       );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleDecision(decision: "accepted" | "declined") {
+    if (!token || !request) {
+      setError("Invalid referee link.");
+      return;
+    }
+
+    setDeciding(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const data = await apiRequest<RefereeDecisionResponse>(
+        `/referee/${token}/decision`,
+        {
+          method: "POST",
+          body: { decision },
+        },
+      );
+
+      if (decision === "accepted") {
+        posthog.capture("referee_request_accepted");
+        setMessage(
+          "You accepted this request. You can now upload the reference.",
+        );
+      } else {
+        posthog.capture("referee_request_declined");
+        setMessage(
+          "You declined this request. The candidate has been notified.",
+        );
+      }
+
+      setRequest((current) =>
+        current
+          ? {
+              ...current,
+              status: data.decision.status,
+              decision: data.decision.decision,
+              decidedAt: data.decision.decidedAt,
+            }
+          : current,
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not save your decision.",
+      );
+    } finally {
+      setDeciding(false);
     }
   }
 
@@ -163,7 +228,10 @@ export default function RefereePage() {
       <section className="grid gap-4 rounded-xl border border-border bg-surface p-5 sm:grid-cols-2">
         <InfoItem label="Candidate" value={request.candidateName} />
         <InfoItem label="Candidate email" value={request.candidateEmail} />
-        <InfoItem label="Institution or company" value={request.institutionName} />
+        <InfoItem
+          label="Institution or company"
+          value={request.institutionName}
+        />
         <InfoItem label="Programme or role" value={request.programmeName} />
         <InfoItem label="Opportunity type" value={request.opportunityType} />
         <InfoItem label="Relationship" value={request.refereeRelationship} />
@@ -177,9 +245,13 @@ export default function RefereePage() {
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="text-sm font-semibold text-foreground">Supporting documents</h2>
+        <h2 className="text-sm font-semibold text-foreground">
+          Supporting documents
+        </h2>
         {request.documents.length === 0 ? (
-          <p className="mt-2 text-sm text-muted">No supporting documents attached.</p>
+          <p className="mt-2 text-sm text-muted">
+            No supporting documents attached.
+          </p>
         ) : (
           <ul className="mt-3 space-y-2">
             {request.documents.map((document) => (
@@ -188,9 +260,12 @@ export default function RefereePage() {
                 className="flex flex-col gap-2 rounded-lg border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="text-sm font-medium text-foreground">{document.name}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {document.name}
+                  </p>
                   <p className="text-xs text-muted">
-                    {document.contentType} · {Math.ceil(document.sizeBytes / 1024)} KB
+                    {document.contentType} ·{" "}
+                    {Math.ceil(document.sizeBytes / 1024)} KB
                   </p>
                 </div>
                 <a
@@ -207,11 +282,49 @@ export default function RefereePage() {
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-5">
-        <h2 className="text-sm font-semibold text-foreground">Upload your reference</h2>
+        <h2 className="text-sm font-semibold text-foreground">Decision</h2>
+        {request.decision ? (
+          <p className="mt-2 text-sm text-muted">
+            Decision recorded:{" "}
+            <span className="font-medium text-foreground">
+              {request.decision}
+            </span>
+            {request.decidedAt
+              ? ` on ${new Date(request.decidedAt).toLocaleString()}.`
+              : "."}
+          </p>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-3">
+            <Button
+              disabled={deciding}
+              onClick={() => handleDecision("accepted")}
+            >
+              {deciding ? "Saving..." : "Accept and continue"}
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={deciding}
+              onClick={() => handleDecision("declined")}
+            >
+              {deciding ? "Saving..." : "Decline request"}
+            </Button>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-5">
+        <h2 className="text-sm font-semibold text-foreground">
+          Upload your reference
+        </h2>
         {request.submittedAt ? (
           <p className="mt-2 text-sm text-success">
             Reference already submitted on{" "}
             {new Date(request.submittedAt).toLocaleString()}.
+          </p>
+        ) : request.decision !== "accepted" ? (
+          <p className="mt-2 text-sm text-muted">
+            Please accept this request first. Upload is available only after
+            acceptance.
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="mt-3 space-y-3">
@@ -238,7 +351,9 @@ export default function RefereePage() {
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted">
+        {label}
+      </p>
       <p className="mt-1 text-sm text-foreground">{value}</p>
     </div>
   );

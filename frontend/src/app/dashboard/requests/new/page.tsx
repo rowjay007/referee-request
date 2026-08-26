@@ -1,20 +1,40 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
 import { getAuthToken } from "@/lib/auth";
 import { ReferenceRequest } from "@/lib/requests";
+import posthog from "posthog-js";
+import { FormEvent, useMemo, useState } from "react";
 
 type CreateRequestResponse = { request: ReferenceRequest };
 type UploadDocumentResponse = {
-  document: { id: string; safeFilename: string; contentType: string; sizeBytes: number };
+  document: {
+    id: string;
+    safeFilename: string;
+    contentType: string;
+    sizeBytes: number;
+  };
 };
 type SendRequestResponse = {
   request: ReferenceRequest;
   refereeLink: string;
   tokenExpires: string;
+};
+
+type RequestReadinessResponse = {
+  requestId: string;
+  readiness: {
+    ready: boolean;
+    missingFields: string[];
+    checklist: {
+      refereeInformation: boolean;
+      applicationPurpose: boolean;
+      deadline: boolean;
+      candidateContext: boolean;
+      supportingInformation: boolean;
+    };
+  };
 };
 
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -48,16 +68,58 @@ export default function NewRequestPage() {
   const [message, setMessage] = useState("");
   const [refereeLink, setRefereeLink] = useState("");
   const [tokenExpires, setTokenExpires] = useState("");
+  const [serverMissingFields, setServerMissingFields] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const selectedPurpose = useMemo(
-    () => (opportunityType === "other" ? customPurpose.trim() : opportunityType),
+    () =>
+      opportunityType === "other" ? customPurpose.trim() : opportunityType,
     [opportunityType, customPurpose],
   );
 
+  const localReadiness = useMemo(() => {
+    const checklist = {
+      refereeInformation:
+        Boolean(refereeName.trim()) &&
+        Boolean(refereeEmail.trim()) &&
+        Boolean(refereeRelationship.trim()),
+      applicationPurpose:
+        Boolean(institutionName.trim()) &&
+        Boolean(programmeName.trim()) &&
+        Boolean(selectedPurpose.trim()),
+      deadline: Boolean(deadlineAt),
+      candidateContext: Boolean(instructions.trim()),
+      supportingInformation: Boolean(files && files.length > 0),
+    };
+
+    const missingFields = Object.entries(checklist)
+      .filter(([, complete]) => !complete)
+      .map(([field]) => field);
+
+    return {
+      checklist,
+      missingFields,
+      ready: missingFields.length === 0,
+    };
+  }, [
+    refereeName,
+    refereeEmail,
+    refereeRelationship,
+    institutionName,
+    programmeName,
+    selectedPurpose,
+    deadlineAt,
+    instructions,
+    files,
+  ]);
+
   function nextStep() {
     if (step === 1) {
-      if (!institutionName.trim() || !programmeName.trim() || !opportunityType) {
+      if (
+        !institutionName.trim() ||
+        !programmeName.trim() ||
+        !opportunityType
+      ) {
         setError("Please complete application details before continuing.");
         return;
       }
@@ -67,7 +129,11 @@ export default function NewRequestPage() {
       }
     }
     if (step === 2) {
-      if (!refereeName.trim() || !refereeEmail.trim() || !refereeRelationship.trim()) {
+      if (
+        !refereeName.trim() ||
+        !refereeEmail.trim() ||
+        !refereeRelationship.trim()
+      ) {
         setError("Please complete referee details before continuing.");
         return;
       }
@@ -96,13 +162,20 @@ export default function NewRequestPage() {
       setError("Please choose what this reference is for.");
       return;
     }
+    if (!localReadiness.ready) {
+      setError(
+        `Complete the request packet before sending. Missing: ${formatMissingFields(localReadiness.missingFields)}.`,
+      );
+      return;
+    }
 
     setLoading(true);
     setError("");
     setMessage("");
     setRefereeLink("");
     setTokenExpires("");
-    posthog.capture("request_creation_started");
+    setServerMissingFields([]);
+    posthog.capture("request_started");
 
     try {
       const deadlineDate = new Date(deadlineAt);
@@ -125,28 +198,53 @@ export default function NewRequestPage() {
         for (const file of Array.from(files)) {
           const payload = new FormData();
           payload.append("file", file);
-          await apiRequest<UploadDocumentResponse>(`/requests/${created.request.id}/documents`, {
-            method: "POST",
-            token,
-            body: payload,
-          });
+          await apiRequest<UploadDocumentResponse>(
+            `/requests/${created.request.id}/documents`,
+            {
+              method: "POST",
+              token,
+              body: payload,
+            },
+          );
         }
       }
 
-      const sent = await apiRequest<SendRequestResponse>(`/requests/${created.request.id}/send`, {
-        method: "POST",
-        token,
-      });
+      const readiness = await apiRequest<RequestReadinessResponse>(
+        `/requests/${created.request.id}/readiness`,
+        {
+          token,
+        },
+      );
 
-      posthog.capture("request_created");
+      if (!readiness.readiness.ready) {
+        setServerMissingFields(readiness.readiness.missingFields);
+        setError(
+          `Your referee may need more context before writing a strong reference. Missing: ${formatMissingFields(readiness.readiness.missingFields)}.`,
+        );
+        return;
+      }
+
+      const sent = await apiRequest<SendRequestResponse>(
+        `/requests/${created.request.id}/send`,
+        {
+          method: "POST",
+          token,
+        },
+      );
+
+      posthog.capture("request_completed");
+      posthog.capture("request_readiness_completed");
       posthog.capture("request_sent");
-      posthog.capture("email_invitation_sent");
       setMessage("Request created and sent successfully.");
       setRefereeLink(sent.refereeLink);
       setTokenExpires(sent.tokenExpires);
       setStep(5);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create or send the request.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not create or send the request.",
+      );
     } finally {
       setLoading(false);
     }
@@ -155,7 +253,9 @@ export default function NewRequestPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 pb-12 sm:px-10">
       <section className="rounded-2xl border border-border bg-surface/90 p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold text-foreground">Create request</h1>
+        <h1 className="text-2xl font-semibold text-foreground">
+          Create request
+        </h1>
         <p className="mt-1 text-sm text-muted">
           Step {step} of {TOTAL_STEPS}. Build once, send once, track clearly.
         </p>
@@ -169,23 +269,49 @@ export default function NewRequestPage() {
         </div>
       </section>
 
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border bg-surface p-6 shadow-sm">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-2xl border border-border bg-surface p-6 shadow-sm"
+      >
         {step === 1 ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">1. About the application</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              1. About the application
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-1">
-                <span className="text-sm text-foreground">Organisation or institution</span>
-                <input required value={institutionName} onChange={(event) => setInstitutionName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2 outline-none" />
+                <span className="text-sm text-foreground">
+                  Organisation or institution
+                </span>
+                <input
+                  required
+                  value={institutionName}
+                  onChange={(event) => setInstitutionName(event.target.value)}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
               </label>
               <label className="block space-y-1">
-                <span className="text-sm text-foreground">Programme or role</span>
-                <input required value={programmeName} onChange={(event) => setProgrammeName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2 outline-none" />
+                <span className="text-sm text-foreground">
+                  Programme or role
+                </span>
+                <input
+                  required
+                  value={programmeName}
+                  onChange={(event) => setProgrammeName(event.target.value)}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
               </label>
             </div>
             <label className="block space-y-1">
-              <span className="text-sm text-foreground">What is this reference for?</span>
-              <select required value={opportunityType} onChange={(event) => setOpportunityType(event.target.value)} className="w-full rounded-md border border-border px-3 py-2 outline-none">
+              <span className="text-sm text-foreground">
+                What is this reference for?
+              </span>
+              <select
+                required
+                value={opportunityType}
+                onChange={(event) => setOpportunityType(event.target.value)}
+                className="w-full rounded-md border border-border px-3 py-2 outline-none"
+              >
                 <option value="">Select one</option>
                 {opportunityOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -197,7 +323,12 @@ export default function NewRequestPage() {
             {opportunityType === "other" ? (
               <label className="block space-y-1">
                 <span className="text-sm text-foreground">Custom purpose</span>
-                <input required value={customPurpose} onChange={(event) => setCustomPurpose(event.target.value)} className="w-full rounded-md border border-border px-3 py-2 outline-none" />
+                <input
+                  required
+                  value={customPurpose}
+                  onChange={(event) => setCustomPurpose(event.target.value)}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
               </label>
             ) : null}
           </section>
@@ -205,44 +336,90 @@ export default function NewRequestPage() {
 
         {step === 2 ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">2. Your referee</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              2. Your referee
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-1">
                 <span className="text-sm text-foreground">Referee name</span>
-                <input required value={refereeName} onChange={(event) => setRefereeName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2 outline-none" />
+                <input
+                  required
+                  value={refereeName}
+                  onChange={(event) => setRefereeName(event.target.value)}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
               </label>
               <label className="block space-y-1">
                 <span className="text-sm text-foreground">Referee email</span>
-                <input required type="email" value={refereeEmail} onChange={(event) => setRefereeEmail(event.target.value)} className="w-full rounded-md border border-border px-3 py-2 outline-none" />
+                <input
+                  required
+                  type="email"
+                  value={refereeEmail}
+                  onChange={(event) => setRefereeEmail(event.target.value)}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
               </label>
             </div>
             <label className="block space-y-1">
               <span className="text-sm text-foreground">Relationship</span>
-              <input required value={refereeRelationship} onChange={(event) => setRefereeRelationship(event.target.value)} className="w-full rounded-md border border-border px-3 py-2 outline-none" />
+              <input
+                required
+                value={refereeRelationship}
+                onChange={(event) => setRefereeRelationship(event.target.value)}
+                className="w-full rounded-md border border-border px-3 py-2 outline-none"
+              />
             </label>
           </section>
         ) : null}
 
         {step === 3 ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">3. Supporting information</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              3. Supporting information
+            </h2>
             <label className="block space-y-1">
-              <span className="text-sm text-foreground">Instructions or context</span>
-              <textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} rows={5} maxLength={5000} className="w-full rounded-md border border-border px-3 py-2 outline-none" />
+              <span className="text-sm text-foreground">
+                Instructions or context
+              </span>
+              <textarea
+                value={instructions}
+                onChange={(event) => setInstructions(event.target.value)}
+                rows={5}
+                maxLength={5000}
+                className="w-full rounded-md border border-border px-3 py-2 outline-none"
+              />
             </label>
             <label className="block space-y-1">
-              <span className="text-sm text-foreground">Supporting documents (optional)</span>
-              <input type="file" multiple onChange={(event) => setFiles(event.target.files)} accept=".pdf,.doc,.docx,.txt" className="w-full rounded-md border border-border px-3 py-2" />
+              <span className="text-sm text-foreground">
+                Supporting documents (optional)
+              </span>
+              <input
+                type="file"
+                multiple
+                onChange={(event) => setFiles(event.target.files)}
+                accept=".pdf,.doc,.docx,.txt"
+                className="w-full rounded-md border border-border px-3 py-2"
+              />
             </label>
           </section>
         ) : null}
 
         {step === 4 ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">4. Deadline</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              4. Deadline
+            </h2>
             <label className="block space-y-1">
-              <span className="text-sm text-foreground">Deadline date and time</span>
-              <input required type="datetime-local" value={deadlineAt} onChange={(event) => setDeadlineAt(event.target.value)} className="w-full rounded-md border border-border px-3 py-2 outline-none" />
+              <span className="text-sm text-foreground">
+                Deadline date and time
+              </span>
+              <input
+                required
+                type="datetime-local"
+                value={deadlineAt}
+                onChange={(event) => setDeadlineAt(event.target.value)}
+                className="w-full rounded-md border border-border px-3 py-2 outline-none"
+              />
             </label>
             <p className="text-xs text-muted">
               Deadline is stored securely and shown in local time for each user.
@@ -252,18 +429,71 @@ export default function NewRequestPage() {
 
         {step === 5 ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">5. Review and send</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              5. Review and send
+            </h2>
             <div className="rounded-xl border border-border bg-background/70 p-4 text-sm text-foreground">
-              <p><strong>Application:</strong> {institutionName} · {programmeName}</p>
-              <p className="mt-1"><strong>Purpose:</strong> {selectedPurpose}</p>
-              <p className="mt-1"><strong>Referee:</strong> {refereeName} ({refereeEmail})</p>
-              <p className="mt-1"><strong>Deadline:</strong> {deadlineAt ? new Date(deadlineAt).toLocaleString() : "Not set"}</p>
+              <p>
+                <strong>Application:</strong> {institutionName} ·{" "}
+                {programmeName}
+              </p>
+              <p className="mt-1">
+                <strong>Purpose:</strong> {selectedPurpose}
+              </p>
+              <p className="mt-1">
+                <strong>Referee:</strong> {refereeName} ({refereeEmail})
+              </p>
+              <p className="mt-1">
+                <strong>Deadline:</strong>{" "}
+                {deadlineAt ? new Date(deadlineAt).toLocaleString() : "Not set"}
+              </p>
             </div>
+            <div className="rounded-xl border border-border bg-background/70 p-4">
+              <p className="text-sm font-semibold text-foreground">
+                Request readiness
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-foreground">
+                <li>
+                  {localReadiness.checklist.refereeInformation ? "✓" : "○"}{" "}
+                  Referee information
+                </li>
+                <li>
+                  {localReadiness.checklist.applicationPurpose ? "✓" : "○"}{" "}
+                  Application purpose
+                </li>
+                <li>
+                  {localReadiness.checklist.deadline ? "✓" : "○"} Deadline
+                </li>
+                <li>
+                  {localReadiness.checklist.candidateContext ? "✓" : "○"}{" "}
+                  Candidate context
+                </li>
+                <li>
+                  {localReadiness.checklist.supportingInformation ? "✓" : "○"}{" "}
+                  Supporting information
+                </li>
+              </ul>
+              {!localReadiness.ready ? (
+                <p className="mt-2 text-xs text-muted">
+                  Missing: {formatMissingFields(localReadiness.missingFields)}
+                </p>
+              ) : null}
+            </div>
+            {serverMissingFields.length > 0 ? (
+              <p className="text-xs text-muted">
+                Server check missing: {formatMissingFields(serverMissingFields)}
+              </p>
+            ) : null}
           </section>
         ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-          <Button type="button" variant="secondary" disabled={step === 1 || loading} onClick={previousStep}>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={step === 1 || loading}
+            onClick={previousStep}
+          >
             Back
           </Button>
           {step < 5 ? (
@@ -271,28 +501,61 @@ export default function NewRequestPage() {
               Continue
             </Button>
           ) : (
-            <Button disabled={loading}>
-              {loading ? "Submitting..." : "Create and send request"}
+            <Button disabled={loading || !localReadiness.ready}>
+              {loading
+                ? "Submitting..."
+                : localReadiness.ready
+                  ? "Create and send request"
+                  : "Complete packet to send"}
             </Button>
           )}
         </div>
       </form>
 
       {message ? (
-        <p className="rounded-lg border border-success/20 bg-green-50 px-4 py-3 text-sm text-success">{message}</p>
+        <p className="rounded-lg border border-success/20 bg-green-50 px-4 py-3 text-sm text-success">
+          {message}
+        </p>
       ) : null}
       {refereeLink ? (
         <div className="space-y-2 rounded-2xl border border-border bg-surface p-4 shadow-sm">
-          <p className="text-sm font-medium text-foreground">Secure referee link</p>
-          <a href={refereeLink} target="_blank" rel="noreferrer" className="break-all text-sm text-primary underline underline-offset-2">
+          <p className="text-sm font-medium text-foreground">
+            Secure referee link
+          </p>
+          <a
+            href={refereeLink}
+            target="_blank"
+            rel="noreferrer"
+            className="break-all text-sm text-primary underline underline-offset-2"
+          >
             {refereeLink}
           </a>
-          <p className="text-xs text-muted">Expires: {new Date(tokenExpires).toLocaleString()}</p>
+          <p className="text-xs text-muted">
+            Expires: {new Date(tokenExpires).toLocaleString()}
+          </p>
         </div>
       ) : null}
       {error ? (
-        <p className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error">{error}</p>
+        <p className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error">
+          {error}
+        </p>
       ) : null}
     </main>
   );
+}
+
+function formatMissingFields(fields: string[]) {
+  if (fields.length === 0) {
+    return "none";
+  }
+
+  const labels: Record<string, string> = {
+    refereeInformation: "referee information",
+    applicationPurpose: "application purpose",
+    deadline: "deadline",
+    candidateContext: "candidate context",
+    supportingInformation: "supporting information",
+  };
+
+  return fields.map((field) => labels[field] ?? field).join(", ");
 }
