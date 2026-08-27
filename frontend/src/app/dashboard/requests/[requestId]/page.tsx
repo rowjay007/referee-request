@@ -67,6 +67,18 @@ export default function RequestDetailPage() {
   const [reminding, setReminding] = useState(false);
   const [thanking, setThanking] = useState(false);
 
+  async function refreshEvents() {
+    if (!token || !requestId) {
+      return;
+    }
+
+    const eventData = await apiRequest<EventsResponse>(
+      `/requests/${requestId}/events`,
+      { token },
+    );
+    setEvents(eventData.events);
+  }
+
   useEffect(() => {
     if (!token || !requestId) {
       return;
@@ -129,6 +141,7 @@ export default function RequestDetailPage() {
         method: "POST",
         token,
       });
+      await refreshEvents();
       posthog.capture("reminder_sent");
       setActionMessage("Reminder queued and will be delivered shortly.");
     } catch (err) {
@@ -153,6 +166,7 @@ export default function RequestDetailPage() {
         method: "POST",
         token,
       });
+      await refreshEvents();
       posthog.capture("thank_you_sent");
       setActionMessage("Thank-you note queued and will be delivered shortly.");
     } catch (err) {
@@ -349,15 +363,24 @@ export default function RequestDetailPage() {
       </section>
 
       <section className="rounded-2xl border border-border bg-surface p-5">
-        <h2 className="text-lg font-semibold text-foreground">Request timeline</h2>
+        <h2 className="text-lg font-semibold text-foreground">
+          Request timeline
+        </h2>
         {events.length === 0 ? (
           <p className="mt-2 text-sm text-muted">No timeline events yet.</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {events.map((event) => (
-              <li key={event.id} className="rounded-xl border border-border bg-background/70 p-3">
-                <p className="text-sm font-medium text-foreground">{eventLabel(event.eventType)}</p>
-                <p className="text-xs text-muted">{new Date(event.createdAt).toLocaleString()}</p>
+              <li
+                key={event.id}
+                className="rounded-xl border border-border bg-background/70 p-3"
+              >
+                <p className="text-sm font-medium text-foreground">
+                  {eventLabel(event.eventType)}
+                </p>
+                <p className="text-xs text-muted">
+                  {new Date(event.createdAt).toLocaleString()}
+                </p>
               </li>
             ))}
           </ul>
@@ -374,6 +397,8 @@ function eventLabel(eventType: string) {
     request_accepted: "Referee accepted request",
     request_declined: "Referee declined request",
     reference_submitted: "Reference submitted",
+    manual_reminder_queued: "Reminder queued",
+    thank_you_queued: "Thank-you note queued",
   };
 
   return labels[eventType] ?? eventType;

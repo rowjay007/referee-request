@@ -209,10 +209,11 @@ func (s *ReferenceRequestStore) QueueManualReminderForCandidate(ctx context.Cont
 	result, err := s.db.Exec(
 		ctx,
 		`
-		INSERT INTO notification_outbox (
+		WITH queued_notification AS (
+			INSERT INTO notification_outbox (
 		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
-		)
-		SELECT
+			)
+			SELECT
 		    r.id,
 		    'manual_reminder',
 		    'email',
@@ -234,23 +235,28 @@ func (s *ReferenceRequestStore) QueueManualReminderForCandidate(ctx context.Cont
 		    0,
 		    5,
 		    NOW()
-		FROM reference_requests r
-		INNER JOIN users u ON u.id = r.candidate_user_id
-		INNER JOIN referee_invitations ri ON ri.reference_request_id = r.id
-		WHERE r.id = $1
-		  AND r.candidate_user_id = $2
-		  AND r.status IN ('sent', 'opened', 'accepted')
-		  AND r.deadline_at > NOW()
-		  AND ri.expires_at > NOW()
-		  AND ri.revoked_at IS NULL
-		  AND ri.submitted_at IS NULL
-		  AND NOT EXISTS (
-		      SELECT 1
-		      FROM notification_outbox n
-		      WHERE n.reference_request_id = r.id
-		        AND n.notification_type IN ('manual_reminder', 'deadline_reminder')
-		        AND n.created_at >= NOW() - interval '6 hours'
-		  )`,
+			FROM reference_requests r
+			INNER JOIN users u ON u.id = r.candidate_user_id
+			INNER JOIN referee_invitations ri ON ri.reference_request_id = r.id
+			WHERE r.id = $1
+			  AND r.candidate_user_id = $2
+			  AND r.status IN ('sent', 'opened', 'accepted')
+			  AND r.deadline_at > NOW()
+			  AND ri.expires_at > NOW()
+			  AND ri.revoked_at IS NULL
+			  AND ri.submitted_at IS NULL
+			  AND NOT EXISTS (
+			      SELECT 1
+			      FROM notification_outbox n
+			      WHERE n.reference_request_id = r.id
+			        AND n.notification_type IN ('manual_reminder', 'deadline_reminder')
+			        AND n.created_at >= NOW() - interval '6 hours'
+			  )
+			RETURNING reference_request_id
+		)
+		INSERT INTO reference_request_events (reference_request_id, event_type, actor_user_id, metadata)
+		SELECT reference_request_id, 'manual_reminder_queued', $2, '{}'::jsonb
+		FROM queued_notification`,
 		requestID,
 		candidateUserID,
 	)
@@ -305,10 +311,11 @@ func (s *ReferenceRequestStore) QueueThankYouForCandidate(ctx context.Context, r
 	result, err := s.db.Exec(
 		ctx,
 		`
-		INSERT INTO notification_outbox (
+		WITH queued_notification AS (
+			INSERT INTO notification_outbox (
 		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
-		)
-		SELECT
+			)
+			SELECT
 		    r.id,
 		    'candidate_thank_you',
 		    'email',
@@ -329,18 +336,23 @@ func (s *ReferenceRequestStore) QueueThankYouForCandidate(ctx context.Context, r
 		    0,
 		    5,
 		    NOW()
-		FROM reference_requests r
-		INNER JOIN users u ON u.id = r.candidate_user_id
-		WHERE r.id = $1
-		  AND r.candidate_user_id = $2
-		  AND r.status = 'submitted'
-		  AND NOT EXISTS (
-		      SELECT 1
-		      FROM notification_outbox n
-		      WHERE n.reference_request_id = r.id
-		        AND n.notification_type = 'candidate_thank_you'
-		        AND n.created_at >= NOW() - interval '7 days'
-		  )`,
+			FROM reference_requests r
+			INNER JOIN users u ON u.id = r.candidate_user_id
+			WHERE r.id = $1
+			  AND r.candidate_user_id = $2
+			  AND r.status = 'submitted'
+			  AND NOT EXISTS (
+			      SELECT 1
+			      FROM notification_outbox n
+			      WHERE n.reference_request_id = r.id
+			        AND n.notification_type = 'candidate_thank_you'
+			        AND n.created_at >= NOW() - interval '7 days'
+			  )
+			RETURNING reference_request_id
+		)
+		INSERT INTO reference_request_events (reference_request_id, event_type, actor_user_id, metadata)
+		SELECT reference_request_id, 'thank_you_queued', $2, '{}'::jsonb
+		FROM queued_notification`,
 		requestID,
 		candidateUserID,
 	)
