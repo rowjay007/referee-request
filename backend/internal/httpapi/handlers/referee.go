@@ -89,21 +89,34 @@ func (h *RefereeHandler) GetRequest(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, response.Envelope{
 		Data: map[string]any{
 			"request": map[string]any{
-				"candidateName":       view.CandidateName,
-				"candidateEmail":      view.CandidateEmail,
-				"refereeName":         view.RefereeName,
-				"refereeEmail":        view.RefereeEmail,
-				"refereeRelationship": view.RefereeRelationship,
-				"institutionName":     view.InstitutionName,
-				"programmeName":       view.ProgrammeName,
-				"opportunityType":     view.OpportunityType,
-				"deadlineAt":          view.DeadlineAt.UTC().Format(time.RFC3339),
-				"instructions":        view.Instructions,
-				"status":              view.Status,
-				"decision":            view.Decision,
-				"decidedAt":           toOptionalRFC3339(view.DecidedAt),
-				"submittedAt":         toOptionalRFC3339(view.SubmittedAt),
-				"documents":           documentItems,
+				"candidateName":         view.CandidateName,
+				"candidateEmail":        view.CandidateEmail,
+				"refereeName":           view.RefereeName,
+				"refereeEmail":          view.RefereeEmail,
+				"refereeRelationship":   view.RefereeRelationship,
+				"institutionName":       view.InstitutionName,
+				"programmeName":         view.ProgrammeName,
+				"opportunityType":       view.OpportunityType,
+				"deadlineAt":            view.DeadlineAt.UTC().Format(time.RFC3339),
+				"instructions":          view.Instructions,
+				"confidentialityMode":   view.ConfidentialityMode,
+				"organization":          view.Organization,
+				"role":                  view.Role,
+				"countryCode":           view.CountryCode,
+				"applicationType":       view.ApplicationType,
+				"submissionMethod":      view.SubmissionMethod,
+				"preferredCompletionAt": toOptionalRFC3339(view.PreferredCompletionAt),
+				"timezone":              view.Timezone,
+				"candidateContext":      view.CandidateContext,
+				"whyApplying":           view.WhyApplying,
+				"relationshipContext":   view.RelationshipContext,
+				"traits":                view.Traits,
+				"achievements":          view.Achievements,
+				"status":                view.Status,
+				"decision":              view.Decision,
+				"decidedAt":             toOptionalRFC3339(view.DecidedAt),
+				"submittedAt":           toOptionalRFC3339(view.SubmittedAt),
+				"documents":             documentItems,
 			},
 		},
 	})
@@ -165,6 +178,27 @@ func (h *RefereeHandler) Decide(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 	})
+}
+
+func (h *RefereeHandler) InProgress(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	if token == "" {
+		response.ValidationError(w, map[string]any{"token": "Token is required."})
+		return
+	}
+	view, err := h.requests.MarkRefereeInProgress(r.Context(), security.HashRefereeToken(token))
+	if err != nil {
+		switch err {
+		case store.ErrRefereeInvitationNotFound:
+			response.NotFound(w, "REFEREE_REQUEST_NOT_FOUND", "This referee link is invalid.")
+		case store.ErrRefereeInProgressNotAllowed:
+			response.Conflict(w, "IN_PROGRESS_NOT_ALLOWED", "Accept this request before starting work.")
+		default:
+			response.InternalError(w)
+		}
+		return
+	}
+	response.JSON(w, http.StatusOK, response.Envelope{Data: map[string]any{"status": view.Status, "inProgressAt": toOptionalRFC3339(view.InProgressAt)}})
 }
 
 func (h *RefereeHandler) DownloadDocument(w http.ResponseWriter, r *http.Request) {
@@ -274,8 +308,9 @@ func (h *RefereeHandler) SubmitReference(w http.ResponseWriter, r *http.Request)
 	referenceID := uuid.New()
 	storageKey := fmt.Sprintf("referee/%s/submitted/%s%s", view.ReferenceRequestID.String(), referenceID.String(), extension)
 	if err := h.storage.Save(r.Context(), storage.SaveInput{
-		Key:  storageKey,
-		Body: fileBody,
+		Key:         storageKey,
+		Body:        fileBody,
+		ContentType: detectedContentType,
 	}); err != nil {
 		response.InternalError(w)
 		return
@@ -291,6 +326,7 @@ func (h *RefereeHandler) SubmitReference(w http.ResponseWriter, r *http.Request)
 		SizeBytes:        int64(len(fileBody)),
 	})
 	if err != nil {
+		_ = h.storage.Delete(r.Context(), storageKey)
 		switch err {
 		case store.ErrRefereeInvitationNotFound:
 			response.NotFound(w, "REFEREE_REQUEST_NOT_FOUND", "This referee link is invalid.")

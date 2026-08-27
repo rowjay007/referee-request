@@ -95,3 +95,7 @@ func (s *Service) ProcessBatch(ctx context.Context, limit int) (int, int, error)
 func (s *Service) QueueDeadlineReminders(ctx context.Context, leadHours int) (int64, error) {
 	return s.store.QueueDeadlineReminders(ctx, leadHours)
 }
+
+func (s *Service) MarkInvitationDelivered(ctx context.Context, providerMessageID string) error {
+	return s.store.MarkInvitationDeliveredByProviderID(ctx, providerMessageID)
+}

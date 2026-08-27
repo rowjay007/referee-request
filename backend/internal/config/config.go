@@ -24,6 +24,8 @@ type Config struct {
 	CORSAllowedOrigins             []string
 	StorageProvider                string
 	StorageLocalRoot               string
+	StorageSupabaseBucket          string
+	SupabaseServiceRoleKey         string
 	UploadMaxBytes                 int64
 	ResendAPIKey                   string
 	ResendFromEmail                string
@@ -39,21 +41,23 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		Environment:        getEnv("APP_ENV", "development"),
-		Port:               getEnv("APP_PORT", "8080"),
-		BaseURL:            getEnv("APP_BASE_URL", "http://localhost:8080"),
-		FrontendBaseURL:    getEnv("FRONTEND_BASE_URL", "http://localhost:3000"),
-		SupabaseURL:        getEnv("SUPABASE_URL", ""),
-		SupabaseAnonKey:    getEnv("SUPABASE_ANON_KEY", ""),
-		DatabaseURL:        os.Getenv("DATABASE_URL"),
-		JWTSecret:          os.Getenv("JWT_SECRET"),
-		OTELExporter:       getEnv("OTEL_EXPORTER", "stdout"),
-		CORSAllowedOrigins: splitCSV(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")),
-		StorageProvider:    getEnv("STORAGE_PROVIDER", "local"),
-		StorageLocalRoot:   getEnv("STORAGE_LOCAL_ROOT", "./tmp/storage"),
-		ResendAPIKey:       getEnv("RESEND_API_KEY", ""),
-		ResendFromEmail:    getEnv("RESEND_FROM_EMAIL", "onboarding@resend.dev"),
-		DispatchToken:      getEnv("NOTIFICATION_DISPATCH_TOKEN", "dev-notification-dispatch-token"),
+		Environment:            getEnv("APP_ENV", "development"),
+		Port:                   getEnv("APP_PORT", "8080"),
+		BaseURL:                getEnv("APP_BASE_URL", "http://localhost:8080"),
+		FrontendBaseURL:        getEnv("FRONTEND_BASE_URL", "http://localhost:3000"),
+		SupabaseURL:            getEnv("SUPABASE_URL", ""),
+		SupabaseAnonKey:        getEnv("SUPABASE_ANON_KEY", ""),
+		DatabaseURL:            os.Getenv("DATABASE_URL"),
+		JWTSecret:              os.Getenv("JWT_SECRET"),
+		OTELExporter:           getEnv("OTEL_EXPORTER", "stdout"),
+		CORSAllowedOrigins:     splitCSV(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")),
+		StorageProvider:        getEnv("STORAGE_PROVIDER", "local"),
+		StorageLocalRoot:       getEnv("STORAGE_LOCAL_ROOT", "./tmp/storage"),
+		StorageSupabaseBucket:  getEnv("STORAGE_SUPABASE_BUCKET", "reference-documents"),
+		SupabaseServiceRoleKey: getEnv("SUPABASE_SERVICE_ROLE_KEY", ""),
+		ResendAPIKey:           getEnv("RESEND_API_KEY", ""),
+		ResendFromEmail:        getEnv("RESEND_FROM_EMAIL", "onboarding@resend.dev"),
+		DispatchToken:          getEnv("NOTIFICATION_DISPATCH_TOKEN", "dev-notification-dispatch-token"),
 	}
 
 	ttl := getEnv("JWT_TTL_MINUTES", "60")
@@ -112,8 +116,22 @@ func Load() (*Config, error) {
 	if cfg.JWTSecret == "" {
 		return nil, errors.New("JWT_SECRET is required")
 	}
-	if cfg.StorageProvider != "local" {
-		return nil, errors.New("STORAGE_PROVIDER must be local")
+	if cfg.StorageProvider != "local" && cfg.StorageProvider != "supabase" {
+		return nil, errors.New("STORAGE_PROVIDER must be local or supabase")
+	}
+	if cfg.Environment == "production" && cfg.StorageProvider != "supabase" {
+		return nil, errors.New("STORAGE_PROVIDER must be supabase in production")
+	}
+	if cfg.StorageProvider == "supabase" {
+		if cfg.SupabaseURL == "" {
+			return nil, errors.New("SUPABASE_URL is required for Supabase storage")
+		}
+		if cfg.SupabaseServiceRoleKey == "" {
+			return nil, errors.New("SUPABASE_SERVICE_ROLE_KEY is required for Supabase storage")
+		}
+		if cfg.StorageSupabaseBucket == "" {
+			return nil, errors.New("STORAGE_SUPABASE_BUCKET is required for Supabase storage")
+		}
 	}
 
 	return cfg, nil

@@ -37,10 +37,24 @@ func (s *LocalStore) Read(_ context.Context, key string) (*ReadOutput, error) {
 
 	body, err := os.ReadFile(fullPath)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 
 	return &ReadOutput{Body: body}, nil
+}
+
+func (s *LocalStore) Delete(_ context.Context, key string) error {
+	fullPath, err := s.resolvePath(key)
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(fullPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
 }
 
 func (s *LocalStore) resolvePath(key string) (string, error) {

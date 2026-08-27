@@ -101,8 +101,9 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	documentID := uuid.New()
 	storageKey := fmt.Sprintf("candidate/%s/requests/%s/documents/%s%s", userID.String(), requestID.String(), documentID.String(), extension)
 	if err := h.storage.Save(r.Context(), storage.SaveInput{
-		Key:  storageKey,
-		Body: fileBody,
+		Key:         storageKey,
+		Body:        fileBody,
+		ContentType: detectedContentType,
 	}); err != nil {
 		response.InternalError(w)
 		return
@@ -119,6 +120,7 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		SizeBytes:        int64(len(fileBody)),
 	})
 	if err != nil {
+		_ = h.storage.Delete(r.Context(), storageKey)
 		response.InternalError(w)
 		return
 	}

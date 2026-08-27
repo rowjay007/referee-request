@@ -131,6 +131,10 @@ Set Render environment values:
 - `NOTIFICATION_DISPATCH_INTERVAL` (for example `45s`)
 - `NOTIFICATION_REMINDER_INTERVAL` (for example `30m`)
 - `NOTIFICATION_DISPATCH_BATCH_LIMIT` (for example `50`)
+- `STORAGE_PROVIDER` (`supabase` is required in production; `local` is the development fallback)
+- `STORAGE_SUPABASE_BUCKET` (private bucket; defaults to `reference-documents`)
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` (backend only)
 
 Optional (only when re-enabling Google auth later): backend Supabase environment values:
 
