@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
 import { getAuthToken } from "@/lib/auth";
@@ -10,6 +8,9 @@ import {
   deadlineLabel,
   statusPresentation,
 } from "@/lib/requests";
+import Link from "next/link";
+import posthog from "posthog-js";
+import { useEffect, useState } from "react";
 
 type ListResponse = {
   requests: ReferenceRequest[];
@@ -20,6 +21,10 @@ export default function RequestsDashboardPage() {
   const [requests, setRequests] = useState<ReferenceRequest[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(Boolean(token));
+  const [actionMessage, setActionMessage] = useState("");
+  const [remindingRequestId, setRemindingRequestId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!token) return;
@@ -27,10 +32,36 @@ export default function RequestsDashboardPage() {
     apiRequest<ListResponse>("/requests", { token })
       .then((data) => setRequests(data.requests))
       .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : "Could not load requests."),
+        setError(
+          err instanceof Error ? err.message : "Could not load requests.",
+        ),
       )
       .finally(() => setLoading(false));
   }, [token]);
+
+  async function sendReminder(requestId: string) {
+    if (!token) {
+      setError("Please sign in to send reminders.");
+      return;
+    }
+
+    setRemindingRequestId(requestId);
+    setError("");
+    setActionMessage("");
+
+    try {
+      await apiRequest(`/requests/${requestId}/reminder`, {
+        method: "POST",
+        token,
+      });
+      posthog.capture("reminder_sent");
+      setActionMessage("Reminder queued and will be delivered shortly.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send reminder.");
+    } finally {
+      setRemindingRequestId(null);
+    }
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 pb-12 sm:px-10">
@@ -63,15 +94,25 @@ export default function RequestsDashboardPage() {
           {error}
         </p>
       ) : null}
+      {actionMessage ? (
+        <p className="rounded-lg border border-success/20 bg-green-50 px-4 py-3 text-sm text-success">
+          {actionMessage}
+        </p>
+      ) : null}
 
       {!loading && !error && requests.length === 0 ? (
         <div className="rounded-2xl border border-border bg-surface p-6">
-          <h2 className="text-lg font-semibold text-foreground">Your references, organised.</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            Your references, organised.
+          </h2>
           <p className="mt-2 text-sm text-muted">
-            Create your first request and we&apos;ll help you keep track of it from invitation to submission.
+            Create your first request and we&apos;ll help you keep track of it
+            from invitation to submission.
           </p>
           <Button asChild className="mt-4">
-            <Link href="/dashboard/requests/new">Create your first request</Link>
+            <Link href="/dashboard/requests/new">
+              Create your first request
+            </Link>
           </Button>
         </div>
       ) : null}
@@ -105,7 +146,9 @@ export default function RequestsDashboardPage() {
                   <p className="text-sm font-medium text-foreground">
                     {new Date(request.deadlineAt).toLocaleString()}
                   </p>
-                  <p className="text-sm text-muted">{deadlineLabel(request.deadlineAt)}</p>
+                  <p className="text-sm text-muted">
+                    {deadlineLabel(request.deadlineAt)}
+                  </p>
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -116,6 +159,34 @@ export default function RequestsDashboardPage() {
                   {status.heading}
                 </span>
                 <p className="text-sm text-foreground">{status.detail}</p>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button asChild variant="secondary">
+                  <Link href={`/dashboard/requests/${request.id}`}>
+                    View request
+                  </Link>
+                </Button>
+                {request.status === "sent" ||
+                request.status === "opened" ||
+                request.status === "accepted" ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={remindingRequestId === request.id}
+                    onClick={() => sendReminder(request.id)}
+                  >
+                    {remindingRequestId === request.id
+                      ? "Sending..."
+                      : "Send reminder"}
+                  </Button>
+                ) : null}
+                {request.status === "declined" ? (
+                  <Button asChild>
+                    <Link href="/dashboard/requests/new">
+                      Choose another referee
+                    </Link>
+                  </Button>
+                ) : null}
               </div>
             </article>
           );

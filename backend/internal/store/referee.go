@@ -3,16 +3,17 @@ package store
 import (
 	"context"
 	"errors"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"time"
 )
 
 var ErrRefereeInvitationNotFound = errors.New("referee invitation not found")
 var ErrRefereeInvitationExpired = errors.New("referee invitation expired")
 var ErrRefereeInvitationRevoked = errors.New("referee invitation revoked")
 var ErrRefereeAlreadySubmitted = errors.New("reference already submitted")
+var ErrRefereeDecisionAlreadyMade = errors.New("referee decision already made")
+var ErrRefereeDecisionRequired = errors.New("referee decision required before submission")
 
 type RefereeInvitation struct {
 	ID                 uuid.UUID
@@ -21,6 +22,8 @@ type RefereeInvitation struct {
 	ExpiresAt          time.Time
 	RevokedAt          *time.Time
 	OpenedAt           *time.Time
+	Decision           *string
+	DecidedAt          *time.Time
 	SubmittedAt        *time.Time
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
@@ -44,7 +47,14 @@ type RefereeRequestView struct {
 	ExpiresAt           time.Time
 	RevokedAt           *time.Time
 	OpenedAt            *time.Time
+	Decision            *string
+	DecidedAt           *time.Time
 	SubmittedAt         *time.Time
+}
+
+type RefereeDecisionInput struct {
+	TokenHash string
+	Decision  string
 }
 
 type SubmitReferenceInput struct {
@@ -118,7 +128,7 @@ func (s *ReferenceRequestStore) SendReferenceRequestWithInvitation(
 		ctx,
 		`INSERT INTO referee_invitations (reference_request_id, token_hash, expires_at)
 		 VALUES ($1, $2, $3)
-		 RETURNING id, reference_request_id, token_hash, expires_at, revoked_at, opened_at, submitted_at, created_at, updated_at`,
+		 RETURNING id, reference_request_id, token_hash, expires_at, revoked_at, opened_at, decision, decided_at, submitted_at, created_at, updated_at`,
 		requestID,
 		tokenHash,
 		expiresAt,
@@ -129,6 +139,8 @@ func (s *ReferenceRequestStore) SendReferenceRequestWithInvitation(
 		&invitation.ExpiresAt,
 		&invitation.RevokedAt,
 		&invitation.OpenedAt,
+		&invitation.Decision,
+		&invitation.DecidedAt,
 		&invitation.SubmittedAt,
 		&invitation.CreatedAt,
 		&invitation.UpdatedAt,
@@ -213,6 +225,8 @@ func (s *ReferenceRequestStore) GetRefereeRequestByTokenHash(ctx context.Context
 			ri.expires_at,
 			ri.revoked_at,
 			ri.opened_at,
+			ri.decision,
+			ri.decided_at,
 			ri.submitted_at
 		FROM referee_invitations ri
 		INNER JOIN reference_requests r ON r.id = ri.reference_request_id
@@ -240,6 +254,8 @@ func (s *ReferenceRequestStore) GetRefereeRequestByTokenHash(ctx context.Context
 		&view.ExpiresAt,
 		&view.RevokedAt,
 		&view.OpenedAt,
+		&view.Decision,
+		&view.DecidedAt,
 		&view.SubmittedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -379,7 +395,7 @@ func (s *ReferenceRequestStore) SubmitReferenceByTokenHash(ctx context.Context, 
 	invitation := RefereeRequestView{}
 	err = tx.QueryRow(
 		ctx,
-		`SELECT ri.id, r.id, r.candidate_user_id, u.full_name, u.email, r.referee_name, r.referee_email, r.referee_relationship, r.institution_name, r.programme_name, r.opportunity_type, r.deadline_at, r.instructions, r.status, ri.expires_at, ri.revoked_at, ri.opened_at, ri.submitted_at
+		`SELECT ri.id, r.id, r.candidate_user_id, u.full_name, u.email, r.referee_name, r.referee_email, r.referee_relationship, r.institution_name, r.programme_name, r.opportunity_type, r.deadline_at, r.instructions, r.status, ri.expires_at, ri.revoked_at, ri.opened_at, ri.decision, ri.decided_at, ri.submitted_at
 		 FROM referee_invitations ri
 		 INNER JOIN reference_requests r ON r.id = ri.reference_request_id
 		 INNER JOIN users u ON u.id = r.candidate_user_id
@@ -404,6 +420,8 @@ func (s *ReferenceRequestStore) SubmitReferenceByTokenHash(ctx context.Context, 
 		&invitation.ExpiresAt,
 		&invitation.RevokedAt,
 		&invitation.OpenedAt,
+		&invitation.Decision,
+		&invitation.DecidedAt,
 		&invitation.SubmittedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -422,6 +440,9 @@ func (s *ReferenceRequestStore) SubmitReferenceByTokenHash(ctx context.Context, 
 	}
 	if invitation.SubmittedAt != nil {
 		return nil, ErrRefereeAlreadySubmitted
+	}
+	if invitation.Decision == nil || *invitation.Decision != "accepted" {
+		return nil, ErrRefereeDecisionRequired
 	}
 
 	submitted := &SubmittedReference{}
@@ -517,4 +538,152 @@ func (s *ReferenceRequestStore) SubmitReferenceByTokenHash(ctx context.Context, 
 		return nil, err
 	}
 	return submitted, nil
+}
+
+func (s *ReferenceRequestStore) DecideRefereeInvitationByTokenHash(ctx context.Context, input RefereeDecisionInput) (*RefereeRequestView, error) {
+	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	view := RefereeRequestView{}
+	err = tx.QueryRow(
+		ctx,
+		`SELECT ri.id, r.id, r.candidate_user_id, u.full_name, u.email, r.referee_name, r.referee_email, r.referee_relationship, r.institution_name, r.programme_name, r.opportunity_type, r.deadline_at, r.instructions, r.status, ri.expires_at, ri.revoked_at, ri.opened_at, ri.decision, ri.decided_at, ri.submitted_at
+		 FROM referee_invitations ri
+		 INNER JOIN reference_requests r ON r.id = ri.reference_request_id
+		 INNER JOIN users u ON u.id = r.candidate_user_id
+		 WHERE ri.token_hash = $1
+		 FOR UPDATE`,
+		input.TokenHash,
+	).Scan(
+		&view.InvitationID,
+		&view.ReferenceRequestID,
+		&view.CandidateUserID,
+		&view.CandidateName,
+		&view.CandidateEmail,
+		&view.RefereeName,
+		&view.RefereeEmail,
+		&view.RefereeRelationship,
+		&view.InstitutionName,
+		&view.ProgrammeName,
+		&view.OpportunityType,
+		&view.DeadlineAt,
+		&view.Instructions,
+		&view.Status,
+		&view.ExpiresAt,
+		&view.RevokedAt,
+		&view.OpenedAt,
+		&view.Decision,
+		&view.DecidedAt,
+		&view.SubmittedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrRefereeInvitationNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC()
+	if view.RevokedAt != nil {
+		return nil, ErrRefereeInvitationRevoked
+	}
+	if now.After(view.ExpiresAt) {
+		return nil, ErrRefereeInvitationExpired
+	}
+	if view.SubmittedAt != nil {
+		return nil, ErrRefereeAlreadySubmitted
+	}
+	if view.Decision != nil {
+		return nil, ErrRefereeDecisionAlreadyMade
+	}
+
+	status := "accepted"
+	eventType := "request_accepted"
+	notificationType := "referee_accepted"
+	subject := "Referee accepted your request"
+	body := "<div style=\"font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;\">" +
+		"<h2 style=\"margin:0 0 12px;\">Referee accepted</h2>" +
+		"<p>Hello " + view.CandidateName + ",</p>" +
+		"<p>" + view.RefereeName + " accepted your reference request.</p>" +
+		"<p><strong>Institution/Company:</strong> " + view.InstitutionName + "<br />" +
+		"<strong>Programme/Role:</strong> " + view.ProgrammeName + "</p>" +
+		"</div>"
+	if input.Decision == "declined" {
+		status = "declined"
+		eventType = "request_declined"
+		notificationType = "referee_declined"
+		subject = "Referee declined your request"
+		body = "<div style=\"font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;\">" +
+			"<h2 style=\"margin:0 0 12px;\">Referee declined</h2>" +
+			"<p>Hello " + view.CandidateName + ",</p>" +
+			"<p>" + view.RefereeName + " declined your reference request.</p>" +
+			"<p><strong>Institution/Company:</strong> " + view.InstitutionName + "<br />" +
+			"<strong>Programme/Role:</strong> " + view.ProgrammeName + "</p>" +
+			"</div>"
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`UPDATE referee_invitations
+		 SET decision = $2, decided_at = NOW(), opened_at = COALESCE(opened_at, NOW()), updated_at = NOW()
+		 WHERE id = $1`,
+		view.InvitationID,
+		input.Decision,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`UPDATE reference_requests
+		 SET status = $2, opened_at = COALESCE(opened_at, NOW()), updated_at = NOW()
+		 WHERE id = $1`,
+		view.ReferenceRequestID,
+		status,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO reference_request_events (reference_request_id, event_type, actor_user_id, metadata)
+		 VALUES ($1, $2, NULL, '{}'::jsonb)`,
+		view.ReferenceRequestID,
+		eventType,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO notification_outbox (
+		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
+		 ) VALUES ($1, $2, 'email', $3, $4, $5, $6, 'queued', 0, 5, NOW())`,
+		view.ReferenceRequestID,
+		notificationType,
+		view.CandidateEmail,
+		view.CandidateName,
+		subject,
+		body,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	view.Status = status
+	decision := input.Decision
+	view.Decision = &decision
+	view.DecidedAt = &now
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return &view, nil
 }

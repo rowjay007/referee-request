@@ -46,6 +46,8 @@ CREATE TABLE referee_invitations (
     expires_at TIMESTAMPTZ NOT NULL,
     revoked_at TIMESTAMPTZ,
     opened_at TIMESTAMPTZ,
+    decision TEXT,
+    decided_at TIMESTAMPTZ,
     submitted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL

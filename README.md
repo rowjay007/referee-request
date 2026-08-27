@@ -2,6 +2,25 @@
 
 RefereeRequest is a modular monolith SaaS that helps candidates request and manage references while keeping the referee flow accountless and fast.
 
+## Product strategy update
+
+The current competitive repositioning, architecture delta, and five-phase realignment plan are documented in:
+
+- `docs/product-repositioning-and-phase-realignment.md`
+
+## External working packs
+
+- `tools/mattbook` is installed from `mattpocock/skills` as a git submodule.
+- `tools/pstack` is installed from `cursor/plugins` as a git submodule.
+- Poteto mode is available at `tools/pstack/pstack/skills/poteto-mode/SKILL.md`.
+- `tools/poteto` is a local alias folder that points to the installed Poteto path.
+
+Refresh both packs in one command:
+
+```bash
+./scripts/sync-packs.sh
+```
+
 ## Monorepo layout
 
 - `frontend/` Next.js 16 App Router application
@@ -46,13 +65,18 @@ cd backend && go test ./...
 - `POST /api/v1/requests`
 - `GET /api/v1/requests`
 - `GET /api/v1/requests/{requestId}`
+- `GET /api/v1/requests/{requestId}/events`
+- `GET /api/v1/requests/{requestId}/readiness`
 - `POST /api/v1/requests/{requestId}/documents`
 - `GET /api/v1/requests/{requestId}/documents`
 - `POST /api/v1/requests/{requestId}/send`
+- `POST /api/v1/requests/{requestId}/reminder`
+- `POST /api/v1/requests/{requestId}/thank-you`
 
 ## Phase 3 referee endpoints
 
 - `GET /api/v1/referee/{token}`
+- `POST /api/v1/referee/{token}/decision`
 - `GET /api/v1/referee/{token}/documents/{documentId}`
 - `POST /api/v1/referee/{token}/submit`
 

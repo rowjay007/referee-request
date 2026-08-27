@@ -1,0 +1,6 @@
+[submodule "tools/mattbook"]
+	path = tools/mattbook
+	url = https://github.com/mattpocock/skills.git
+[submodule "tools/pstack"]
+	path = tools/pstack
+	url = https://github.com/cursor/plugins.git

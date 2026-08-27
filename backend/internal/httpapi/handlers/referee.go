@@ -2,9 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"net/http"
-	"time"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/rowjay007/referee-request/backend/internal/config"
@@ -12,12 +9,19 @@ import (
 	"github.com/rowjay007/referee-request/backend/internal/security"
 	"github.com/rowjay007/referee-request/backend/internal/storage"
 	"github.com/rowjay007/referee-request/backend/internal/store"
+	"net/http"
+	"strings"
+	"time"
 )
 
 type RefereeHandler struct {
 	cfg      *config.Config
 	requests *store.ReferenceRequestStore
 	storage  storage.Store
+}
+
+type refereeDecisionPayload struct {
+	Decision string `json:"decision"`
 }
 
 func NewRefereeHandler(cfg *config.Config, requests *store.ReferenceRequestStore, storage storage.Store) *RefereeHandler {
@@ -96,8 +100,68 @@ func (h *RefereeHandler) GetRequest(w http.ResponseWriter, r *http.Request) {
 				"deadlineAt":          view.DeadlineAt.UTC().Format(time.RFC3339),
 				"instructions":        view.Instructions,
 				"status":              view.Status,
+				"decision":            view.Decision,
+				"decidedAt":           toOptionalRFC3339(view.DecidedAt),
 				"submittedAt":         toOptionalRFC3339(view.SubmittedAt),
 				"documents":           documentItems,
+			},
+		},
+	})
+}
+
+func (h *RefereeHandler) Decide(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	if token == "" {
+		response.ValidationError(w, map[string]any{"token": "Token is required."})
+		return
+	}
+
+	payload := refereeDecisionPayload{}
+	if err := decodeJSONBody(r, &payload, 32*1024); err != nil {
+		response.ValidationError(w, map[string]any{"body": "Invalid JSON body."})
+		return
+	}
+
+	payload.Decision = strings.TrimSpace(strings.ToLower(payload.Decision))
+	if payload.Decision != "accepted" && payload.Decision != "declined" {
+		response.ValidationError(w, map[string]any{"decision": "Decision must be one of: accepted, declined."})
+		return
+	}
+
+	tokenHash := security.HashRefereeToken(token)
+	view, err := h.requests.DecideRefereeInvitationByTokenHash(r.Context(), store.RefereeDecisionInput{
+		TokenHash: tokenHash,
+		Decision:  payload.Decision,
+	})
+	if err != nil {
+		switch err {
+		case store.ErrRefereeInvitationNotFound:
+			response.NotFound(w, "REFEREE_REQUEST_NOT_FOUND", "This referee link is invalid.")
+		case store.ErrRefereeInvitationExpired:
+			response.JSON(w, http.StatusGone, response.Envelope{
+				Error: &response.APIError{
+					Code:    "REFEREE_LINK_EXPIRED",
+					Message: "This referee link has expired.",
+				},
+			})
+		case store.ErrRefereeInvitationRevoked:
+			response.Forbidden(w, "This referee link has been revoked.")
+		case store.ErrRefereeAlreadySubmitted:
+			response.Conflict(w, "REFERENCE_ALREADY_SUBMITTED", "A reference has already been submitted for this request.")
+		case store.ErrRefereeDecisionAlreadyMade:
+			response.Conflict(w, "REFEREE_DECISION_ALREADY_MADE", "A decision has already been recorded for this request.")
+		default:
+			response.InternalError(w)
+		}
+		return
+	}
+
+	response.JSON(w, http.StatusOK, response.Envelope{
+		Data: map[string]any{
+			"decision": map[string]any{
+				"status":    view.Status,
+				"decision":  view.Decision,
+				"decidedAt": toOptionalRFC3339(view.DecidedAt),
 			},
 		},
 	})
@@ -241,6 +305,8 @@ func (h *RefereeHandler) SubmitReference(w http.ResponseWriter, r *http.Request)
 			response.Forbidden(w, "This referee link has been revoked.")
 		case store.ErrRefereeAlreadySubmitted:
 			response.Conflict(w, "REFERENCE_ALREADY_SUBMITTED", "A reference has already been submitted for this request.")
+		case store.ErrRefereeDecisionRequired:
+			response.Conflict(w, "REFEREE_DECISION_REQUIRED", "Please accept this request before submitting a reference.")
 		default:
 			response.InternalError(w)
 		}
