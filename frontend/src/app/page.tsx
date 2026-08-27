@@ -4,7 +4,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowUp,
+  ArrowRight,
+  Award,
+  BadgeCheck,
+  BriefcaseBusiness,
+  CalendarClock,
+  Check,
+  FileText,
+  GraduationCap,
+  Landmark,
+  Link2,
+  Send,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
+import { CoordinationScene } from "@/components/home/coordination-scene";
+import {
+  COORDINATION_SCENE,
+  type JourneyMilestoneId,
+} from "@/components/home/scene-model";
 import { Button } from "@/components/ui/button";
 import { useAuthToken } from "@/lib/auth";
 
@@ -16,6 +36,9 @@ type ToastState = {
 export default function Home() {
   const router = useRouter();
   const [toast, setToast] = useState<ToastState>(null);
+  const [activeStage, setActiveStage] = useState<JourneyMilestoneId>(
+    COORDINATION_SCENE.activeStage,
+  );
   const isAuthenticated = Boolean(useAuthToken());
 
   useEffect(() => {
@@ -34,56 +57,82 @@ export default function Home() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="rr-motion-float pointer-events-none absolute -left-28 top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
-      <div className="rr-motion-float rr-motion-float-delay pointer-events-none absolute -right-16 top-120 h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
-      <div className="mx-auto w-full max-w-7xl px-6 pb-14 pt-6 sm:px-10">
-        <header className="rr-motion-rise flex items-center justify-between gap-4">
-          <Link href="/" aria-label="Go to RefereeRequest home">
-            <Image
-              src="/referee-request-logo.svg"
-              alt="RefereeRequest"
-              width={44}
-              height={44}
-              priority
-            />
-          </Link>
-          <nav className="hidden items-center gap-10 text-sm text-muted md:flex">
-            <a
-              href="#how-it-works"
-              className="transition-colors hover:text-foreground"
-            >
-              The method
-            </a>
-            <a href="#why" className="transition-colors hover:text-foreground">
-              Why it works
-            </a>
-          </nav>
-          <div className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  navigateWithToast(
-                    "/dashboard",
-                    "Opening your dashboard...",
-                    "info",
-                  )
-                }
-              >
-                Dashboard
-              </Button>
-            ) : (
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  navigateWithToast("/signin", "Opening sign in...", "info")
-                }
-              >
-                Sign in
-              </Button>
-            )}
+    <main id="top" className="rr-home">
+      <header className="rr-site-header">
+        <Link href="/" aria-label="Go to RefereeRequest home" className="rr-brand">
+          <Image
+            src="/referee-request-logo.svg"
+            alt="RefereeRequest"
+            width={46}
+            height={46}
+            priority
+          />
+        </Link>
+
+        <nav className="rr-main-nav" aria-label="Explore RefereeRequest">
+          <a href="#compose">Compose</a>
+          <a href="#handoff">Handoff</a>
+          <a href="#certainty">Certainty</a>
+          <a href="#reach">Reach</a>
+        </nav>
+
+        <nav className="rr-auth-actions" aria-label="Account navigation">
+          {isAuthenticated ? (
             <Button
+              variant="secondary"
+              onClick={() =>
+                navigateWithToast("/dashboard", "Opening your dashboard...", "info")
+              }
+            >
+              Dashboard
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              onClick={() =>
+                navigateWithToast("/signin", "Opening sign in...", "info")
+              }
+            >
+              Sign in
+            </Button>
+          )}
+
+          <Button
+            onClick={() =>
+              isAuthenticated
+                ? navigateWithToast(
+                    "/dashboard/requests/new",
+                    "Opening request builder...",
+                    "success",
+                  )
+                : navigateWithToast(
+                    "/signup",
+                    "Starting your request...",
+                    "success",
+                  )
+            }
+          >
+            Start a request
+          </Button>
+
+        </nav>
+      </header>
+
+      <section className="rr-hero" aria-label="Reference Relay hero">
+        <CoordinationScene
+          activeStage={activeStage}
+          onStageChange={setActiveStage}
+        />
+
+        <div className="rr-hero-content">
+          <h1>References, without the chase.</h1>
+          <p className="rr-support-copy">
+            One secure request. Clear progress. Less follow-up.
+          </p>
+
+          <div className="rr-hero-actions">
+            <Button
+              size="lg"
               onClick={() =>
                 isAuthenticated
                   ? navigateWithToast(
@@ -93,432 +142,197 @@ export default function Home() {
                     )
                   : navigateWithToast(
                       "/signup",
-                      "Starting your request...",
+                      "Redirecting to sign up...",
                       "success",
                     )
               }
             >
-              Start a request
-            </Button>
-            {isAuthenticated ? (
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  navigateWithToast("/signout", "Signing you out...", "info")
-                }
-              >
-                Sign out
-              </Button>
-            ) : null}
-          </div>
-        </header>
-
-        <div className="mt-6 border-t border-border" />
-
-        <section className="grid items-center gap-10 py-12 lg:grid-cols-[1fr_0.94fr]">
-          <div className="rr-motion-rise">
-            <h1 className="mt-2 text-5xl font-semibold leading-[0.94] tracking-tight text-foreground sm:text-7xl">
-              The clean way to
-              <span className="mt-1 block">get a reference.</span>
-            </h1>
-            <p className="mt-8 max-w-xl text-xl leading-relaxed text-muted">
-              Create once, share one secure link, track the outcome.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Button
-                size="lg"
-                className="rounded-full px-6"
-                onClick={() =>
-                  isAuthenticated
-                    ? navigateWithToast(
-                        "/dashboard/requests/new",
-                        "Opening request builder...",
-                        "success",
-                      )
-                    : navigateWithToast(
-                        "/signup",
-                        "Redirecting to Google sign up...",
-                        "success",
-                      )
-                }
-              >
-                <span className="inline-flex items-center gap-2">
-                  Create your first request
-                  <ArrowRight className="h-4 w-4" />
-                </span>
-              </Button>
-              <a
-                href="#how-it-works"
-                className="rounded-full border border-border bg-surface px-5 py-2 text-sm font-semibold uppercase tracking-[0.14em] text-muted transition-colors hover:text-foreground"
-              >
-                See the method
-              </a>
-            </div>
-            <p className="mt-6 inline-flex rounded-full border border-border bg-surface px-4 py-2 text-sm uppercase tracking-[0.2em] text-muted">
-              References, without the chasing.
-            </p>
-          </div>
-
-          <article className="rr-paper-card rr-motion-float relative rounded-[22px] border border-[#c8d5e7] bg-[#f4f8ff] shadow-[0_24px_52px_-34px_rgba(24,20,38,0.5)]">
-            <div className="flex items-center justify-between border-b border-[#c8d5e7] px-5 py-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
-                  Workspace
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">
-                  Good morning, Alex
-                </p>
-              </div>
-              <span className="rounded-xl bg-[#c9f3ef] px-3 py-1 text-xs font-semibold text-[#0d5b54]">
-                3 active
+              <span className="inline-flex items-center gap-2">
+                Create your request
+                <ArrowRight className="h-4 w-4" />
               </span>
-            </div>
-            <div className="grid grid-cols-3 border-b border-[#c8d5e7] text-foreground">
-              <div className="border-r border-[#c8d5e7] px-5 py-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
-                  Active
-                </p>
-                <p className="mt-2 text-5xl font-semibold">03</p>
-              </div>
-              <div className="border-r border-[#c8d5e7] px-5 py-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
-                  Submitted
-                </p>
-                <p className="mt-2 text-5xl font-semibold">12</p>
-              </div>
-              <div className="px-5 py-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
-                  On time
-                </p>
-                <p className="mt-2 text-5xl font-semibold">98%</p>
-              </div>
-            </div>
-            <div className="px-5 py-5">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-lg font-semibold text-foreground">
-                  Recent activity
-                </p>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  View all
-                </p>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-lg font-semibold text-foreground">
-                      Dr. Hart
-                    </p>
-                    <p className="text-sm text-muted">Request</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="rounded-lg bg-[#c8efc6] px-2.5 py-1 text-xs font-semibold text-[#245d20]">
-                      Opened
-                    </span>
-                    <p className="mt-1 text-sm text-muted">10:18</p>
-                  </div>
-                </div>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-lg font-semibold text-foreground">
-                      J. Cole
-                    </p>
-                    <p className="text-sm text-muted">Request</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="rounded-lg bg-[#ffedd7] px-2.5 py-1 text-xs font-semibold text-[#9a5a13]">
-                      Awaiting upload
-                    </span>
-                    <p className="mt-1 text-sm text-muted">Yesterday</p>
-                  </div>
-                </div>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-lg font-semibold text-foreground">
-                      L. Smith
-                    </p>
-                    <p className="text-sm text-muted">Request</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="rounded-lg bg-[#c9f3ef] px-2.5 py-1 text-xs font-semibold text-[#0d5b54]">
-                      Submitted
-                    </span>
-                    <p className="mt-1 text-sm text-muted">Mon</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-        </section>
+            </Button>
+          </div>
 
-        <section
-          id="why"
-          className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8"
-        >
-          <span className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-primary/8 blur-2xl" />
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.65fr]">
-            <article className="rr-tilt-3d rr-motion-rise relative rounded-2xl border border-border bg-background/80 p-6">
-              <span className="pointer-events-none absolute -right-6 bottom-4 h-14 w-14 rounded-full border border-primary/30" />
-              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">
-                The shift
-              </p>
-              <h2 className="mt-4 text-5xl font-semibold leading-[0.95] tracking-tight text-foreground">
-                Less follow-up.
-                <br />
-                More forward motion.
-              </h2>
+        </div>
+      </section>
+
+      <section id="compose" className="rr-story-slide rr-story-compose">
+        <div className="rr-compose-copy">
+          <h2>A better ask starts complete.</h2>
+          <p>Build the brief your referee wishes every candidate sent.</p>
+          <div className="rr-readiness-stamp">
+            <BadgeCheck />
+            <span>Ready to send</span>
+          </div>
+        </div>
+        <div className="rr-compose-visual" aria-hidden="true">
+          <div className="rr-paper-piece rr-paper-context">
+            <FileText />
+            <span>Context</span>
+          </div>
+          <div className="rr-paper-piece rr-paper-deadline">
+            <CalendarClock />
+            <span>Deadline</span>
+          </div>
+          <div className="rr-paper-piece rr-paper-files">
+            <ShieldCheck />
+            <span>Files</span>
+          </div>
+          <div className="rr-ready-sheet">
+            <span>REFERENCE PACKET</span>
+            <dl>
+              <div><dt>Purpose</dt><dd>Graduate study</dd></div>
+              <div><dt>Relationship</dt><dd>Research supervisor</dd></div>
+              <div><dt>Deadline</dt><dd>14 October</dd></div>
+              <div><dt>Highlights</dt><dd>Leadership · Research · Delivery</dd></div>
+            </dl>
+            <p><ShieldCheck /> Confidential request</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="handoff" className="rr-story-slide rr-story-handoff">
+        <div className="rr-handoff-watermark" aria-hidden="true">SECURE HANDOFF</div>
+        <div className="rr-handoff-heading">
+          <h2>One link.<br />A human answer.</h2>
+          <p>No account wall between the ask and the response.</p>
+          <dl className="rr-handoff-facts">
+            <div className="rr-fact-account"><dt>Account</dt><dd>Not required</dd></div>
+            <div className="rr-fact-access"><dt>Access</dt><dd><ShieldCheck /> Private invitation</dd></div>
+            <div className="rr-fact-decision"><dt>Decision</dt><dd>Accept <span>or</span> decline</dd></div>
+          </dl>
+        </div>
+        <div className="rr-invitation-visual">
+          <span className="rr-endpoint-label rr-endpoint-candidate" aria-hidden="true">Candidate</span>
+          <span className="rr-endpoint-label rr-endpoint-referee" aria-hidden="true">Referee</span>
+          <div className="rr-invitation-card">
+            <div className="rr-invitation-sender">
+              <UserRound />
+              <span>Alex sent a reference request</span>
+            </div>
+            <h3>Will you provide this reference?</h3>
+            <p>Review the context, deadline, and supporting files before deciding.</p>
+            <div className="rr-invitation-actions" aria-hidden="true">
+              <span><Check /> Accept</span>
+              <span>Decline</span>
+            </div>
+            <small><ShieldCheck /> Secure link · No account required</small>
+          </div>
+          <div className="rr-link-flight" aria-hidden="true">
+            <span className="rr-link-flight-line" />
+            <span className="rr-link-flight-packet"><Link2 /></span>
+          </div>
+          <div className="rr-acceptance-receipt" aria-hidden="true">
+            <BadgeCheck />
+            <span>Decision received<strong>Accepted</strong></span>
+          </div>
+        </div>
+      </section>
+
+      <section id="certainty" className="rr-story-slide rr-story-certainty">
+        <div className="rr-certainty-heading">
+          <p>REFERENCE IN PROGRESS</p>
+          <h2>Moving forward.</h2>
+          <div className="rr-deadline-count">
+            <strong>6</strong>
+            <span>days to<br />deadline</span>
+          </div>
+        </div>
+        <article className="rr-activity-receipt">
+          <header>
+            <span>REQUEST ACTIVITY</span>
+            <strong><BadgeCheck /> On track</strong>
+          </header>
+          <ol>
+            <li>
+              <span className="rr-activity-icon"><Send /></span>
+              <div><strong>Delivered</strong><small>Invitation reached your referee</small></div>
+              <time>Mon<br />09:12</time>
+            </li>
+            <li>
+              <span className="rr-activity-icon"><Check /></span>
+              <div><strong>Accepted</strong><small>Your referee confirmed</small></div>
+              <time>Mon<br />10:04</time>
+            </li>
+            <li className="rr-activity-current">
+              <span className="rr-activity-icon"><FileText /></span>
+              <div><strong>In progress</strong><small>Reference is being prepared</small></div>
+              <time>NOW</time>
+            </li>
+          </ol>
+          <footer className="rr-receipt-reminder">
+            <CalendarClock />
+            <div><strong>Reminder available</strong><span>Send when the timing is right</span></div>
+          </footer>
+        </article>
+      </section>
+
+      <section id="reach" className="rr-story-slide rr-story-reach">
+        <div className="rr-passport-visual" aria-hidden="true">
+          <div className="rr-passport-panel rr-passport-study">
+            <GraduationCap />
+            <span>Study</span>
+          </div>
+          <div className="rr-passport-panel rr-passport-work">
+            <BriefcaseBusiness />
+            <span>Work</span>
+          </div>
+          <div className="rr-passport-panel rr-passport-funding">
+            <Landmark />
+            <span>Funding</span>
+          </div>
+          <div className="rr-passport-panel rr-passport-professional">
+            <Award />
+            <span>Professional</span>
+          </div>
+        </div>
+        <div className="rr-story-copy">
+          <h2>One request. Many next chapters.</h2>
+          <span>Built for opportunity wherever it takes you.</span>
+          <div className="rr-ticket-stack" aria-label="Global opportunity contexts">
+            <article className="rr-opportunity-ticket rr-ticket-study">
+              <span>EDU / 01</span><strong>Admissions</strong><small>Study · Research</small>
             </article>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5">
-                <span className="pointer-events-none absolute -right-5 -top-5 h-16 w-16 rounded-full bg-primary/14" />
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  01
-                </p>
-                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">
-                  One source
-                </p>
-                <p className="mt-3 text-lg leading-relaxed text-muted">
-                  Context, files, deadline together.
-                </p>
-              </article>
-              <article
-                className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5"
-                style={{ animationDelay: "120ms" }}
-              >
-                <span className="pointer-events-none absolute -left-6 bottom-2 h-14 w-14 rounded-2xl border border-primary/30" />
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  02
-                </p>
-                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">
-                  Clear signals
-                </p>
-                <p className="mt-3 text-lg leading-relaxed text-muted">
-                  Know opened, pending, done.
-                </p>
-              </article>
-              <article
-                className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5"
-                style={{ animationDelay: "220ms" }}
-              >
-                <span className="pointer-events-none absolute -right-7 bottom-3 h-16 w-16 rounded-full border border-primary/35" />
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                  03
-                </p>
-                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">
-                  Human-friendly
-                </p>
-                <p className="mt-3 text-lg leading-relaxed text-muted">
-                  Referees submit without friction.
-                </p>
-              </article>
+            <article className="rr-opportunity-ticket rr-ticket-work">
+              <span>WRK / 02</span><strong>Fellowships</strong><small>Roles · Careers</small>
+            </article>
+            <article className="rr-opportunity-ticket rr-ticket-funding">
+              <span>FND / 03</span><strong>Funding</strong><small>Grants · Scholarships</small>
+            </article>
+            <article className="rr-opportunity-ticket rr-ticket-professional">
+              <span>PRO / 04</span><strong>Credentials</strong><small>Membership · Practice</small>
+            </article>
+            <div className="rr-ticket-hub">
+              <ShieldCheck />
+              <span>ONE REQUEST</span>
             </div>
-          </div>
-        </section>
-
-        <section id="how-it-works" className="py-12">
-          <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8">
-            <span className="pointer-events-none absolute -left-8 -top-8 h-32 w-32 rounded-full bg-secondary/8 blur-2xl" />
-            <div className="grid gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">
-                  The method
-                </p>
-                <h2 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-7xl">
-                  A request that knows where it is going.
-                </h2>
-                <p className="mt-5 max-w-2xl text-xl leading-relaxed text-muted">
-                  Three moves. One clear workflow.
-                </p>
-              </div>
-              <div className="grid gap-3">
-                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3">
-                  <p className="text-sm font-semibold text-foreground">
-                    Build request
-                  </p>
-                </article>
-                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3 sm:translate-x-6">
-                  <p className="text-sm font-semibold text-foreground">
-                    Send secure link
-                  </p>
-                </article>
-                <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3">
-                  <p className="text-sm font-semibold text-foreground">
-                    Track status
-                  </p>
-                </article>
-              </div>
+            <p className="rr-ticket-caption">ANY COUNTRY <b>·</b> YOUR TIMEZONE</p>
             </div>
-          </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="grid gap-4 pb-12 lg:grid-cols-[1.25fr_0.75fr]">
-          <article className="rr-tilt-3d rounded-3xl border border-border bg-surface p-6 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-              Confidence board
-            </p>
-            <h3 className="mt-3 text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
-              Calm visibility from first ask to final reference.
-            </h3>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-border bg-background/75 p-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary">
-                  Signal
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  Opened
-                </p>
-              </div>
-              <div className="rounded-xl border border-border bg-background/75 p-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary">
-                  Signal
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  Pending
-                </p>
-              </div>
-              <div className="rounded-xl border border-border bg-background/75 p-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary">
-                  Signal
-                </p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  Submitted
-                </p>
-              </div>
-            </div>
-          </article>
-          <article className="rr-tilt-3d relative overflow-hidden rounded-3xl border border-border bg-[#f8f2e8] p-6">
-            <span className="pointer-events-none absolute -right-10 -top-8 h-28 w-28 rounded-full bg-primary/15" />
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-              Zero friction
-            </p>
-            <p className="mt-3 text-3xl font-semibold leading-tight text-foreground">
-              Referees stay account-free.
-            </p>
-            <p className="mt-3 text-base text-muted">
-              Open link. Upload file. Submit.
-            </p>
-          </article>
-        </section>
-
-        <section className="grid gap-4 pb-12 sm:grid-cols-2 lg:grid-cols-4">
-          <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">
-              Academic
-            </p>
-            <p className="mt-2 text-lg font-semibold text-foreground">
-              University
-            </p>
-          </article>
-          <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">
-              Funding
-            </p>
-            <p className="mt-2 text-lg font-semibold text-foreground">
-              Scholarship
-            </p>
-          </article>
-          <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">
-              Career
-            </p>
-            <p className="mt-2 text-lg font-semibold text-foreground">
-              Employment
-            </p>
-          </article>
-          <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">
-              Professional
-            </p>
-            <p className="mt-2 text-lg font-semibold text-foreground">
-              Membership
-            </p>
-          </article>
-        </section>
-
-        <section className="rounded-3xl bg-secondary px-8 py-12 text-white sm:px-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">
-            Your next application deserves this
-          </p>
-          <h2 className="mt-5 text-5xl font-semibold leading-[0.95] tracking-tight sm:text-7xl">
-            Start with a better ask.
-          </h2>
-          <p className="mt-5 max-w-2xl text-2xl text-white/75">
-            Build the request once. Let RefereeRequest carry it through.
-          </p>
-          <Button
-            size="lg"
-            className="mt-8 rounded-full border border-primary/40 bg-primary px-6 hover:bg-primary/90"
-            onClick={() =>
-              navigateWithToast("/signup", "Opening signup...", "success")
-            }
-          >
-            <span className="inline-flex items-center gap-2">
-              Start free
-              <ArrowRight className="h-4 w-4" />
-            </span>
-          </Button>
-        </section>
-
-        <footer className="border-t border-border py-8 text-sm text-muted">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <Link href="/" aria-label="Go to RefereeRequest home">
-                <Image
-                  src="/referee-request-logo.svg"
-                  alt="RefereeRequest"
-                  width={36}
-                  height={36}
-                />
-              </Link>
-              <span>References without the chasing.</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-5">
-              <a
-                href="#how-it-works"
-                className="transition-colors hover:text-foreground"
-              >
-                The method
-              </a>
-              <a
-                href="#why"
-                className="transition-colors hover:text-foreground"
-              >
-                Why it works
-              </a>
-              {isAuthenticated ? (
-                <Link
-                  href="/signout"
-                  className="transition-colors hover:text-foreground"
-                >
-                  Sign out
-                </Link>
-              ) : (
-                <Link
-                  href="/signin"
-                  className="transition-colors hover:text-foreground"
-                >
-                  Google sign in
-                </Link>
-              )}
-              <a
-                href="mailto:hello@refereerequest.com"
-                className="transition-colors hover:text-foreground"
-              >
-                hello@refereerequest.com
-              </a>
-            </div>
-          </div>
-          <p className="mt-4 text-xs">
-            © {new Date().getFullYear()} RefereeRequest. All rights reserved.
-          </p>
-        </footer>
-      </div>
+      <footer className="rr-footer">
+        <Link href="/" aria-label="RefereeRequest home" className="rr-footer-mark">
+          <Image
+            src="/referee-request-logo.svg"
+            alt=""
+            width={40}
+            height={40}
+          />
+        </Link>
+        <p>© {new Date().getFullYear()}</p>
+        <a href="#top" aria-label="Back to top" className="rr-back-to-top">
+          <ArrowUp aria-hidden="true" />
+        </a>
+      </footer>
 
       {toast ? (
         <div
-          className={`rr-toast fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] rounded-lg border px-4 py-3 text-sm text-white shadow-lg ${
-            toast.type === "success"
-              ? "border-primary/40 bg-primary"
-              : "border-secondary/40 bg-secondary"
+          role="status"
+          aria-live="polite"
+          className={`rr-toast rr-home-toast ${
+            toast.type === "success" ? "rr-toast-success" : "rr-toast-info"
           }`}
         >
           {toast.message}

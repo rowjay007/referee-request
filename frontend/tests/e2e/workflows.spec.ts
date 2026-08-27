@@ -228,3 +228,68 @@ test("dashboard navigation remains usable at mobile width", async ({
   ).toBeVisible();
   await expectAccessible(page);
 });
+
+test("homepage presents Reference Relay lifecycle with authenticated CTA", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", {
+      name: "References, without the chase.",
+    }),
+  ).toBeVisible();
+  await expect(page.locator(".rr-story-slide")).toHaveCount(4);
+  await expect(
+    page.getByRole("heading", { name: "A better ask starts complete." }),
+  ).toBeAttached();
+  await expect(
+    page.getByRole("heading", { name: "One link. A human answer." }),
+  ).toBeAttached();
+  await expect(
+    page.getByRole("heading", { name: "Moving forward." }),
+  ).toBeAttached();
+  await expect(
+    page.getByRole("heading", { name: "One request. Many next chapters." }),
+  ).toBeAttached();
+  await expect(page.getByText(`© ${new Date().getFullYear()}`)).toBeAttached();
+
+  await expect
+    .poll(
+      () => page.locator('.rr-stage-control[aria-pressed="true"]').innerText(),
+      { timeout: 5000 },
+    )
+    .not.toBe("Compose");
+
+  const acceptedMilestone = page.getByRole("button", {
+    name: /Handoff: One clear exchange/i,
+  });
+  await acceptedMilestone.focus();
+  await expect(acceptedMilestone).toBeFocused();
+
+  await expect(page.locator("canvas")).toBeVisible();
+  const heroShot = await page.locator(".rr-hero").screenshot();
+  expect(heroShot.byteLength).toBeGreaterThan(16000);
+  const hasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > window.innerWidth,
+  );
+  expect(hasHorizontalOverflow).toBeFalsy();
+
+  await expectAccessible(page);
+
+  await page.getByRole("button", { name: "Create your request" }).click();
+  await expect(page).toHaveURL(/\/dashboard\/requests\/new$/);
+});
+
+test("homepage routes signed-out users to signup", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.removeItem("rr_token");
+    window.dispatchEvent(new Event("rr-token-change"));
+  });
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Create your request" }).click();
+  await expect(page).toHaveURL(/\/signup$/);
+});
