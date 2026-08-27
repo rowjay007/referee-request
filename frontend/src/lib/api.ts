@@ -54,3 +54,29 @@ export async function apiRequest<T>(
 
   return payload?.data as T;
 }
+
+export async function apiDownload(path: string, token: string) {
+  if (!API_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_API_BASE_URL is not configured.");
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    if (response.status === 401) clearAuthToken();
+    let message = "Could not download the file.";
+    try {
+      const payload = (await response.json()) as {
+        error?: { message?: string };
+      };
+      message = payload.error?.message ?? message;
+    } catch {}
+    throw new Error(message);
+  }
+
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const filename =
+    disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? "reference";
+  return { blob: await response.blob(), filename };
+}

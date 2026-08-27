@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getAuthToken } from "@/lib/auth";
+import { useAuthToken } from "@/lib/auth";
 
 type ToastState = {
   message: string;
@@ -16,7 +16,7 @@ type ToastState = {
 export default function Home() {
   const router = useRouter();
   const [toast, setToast] = useState<ToastState>(null);
-  const [isAuthenticated] = useState(() => Boolean(getAuthToken()));
+  const isAuthenticated = Boolean(useAuthToken());
 
   useEffect(() => {
     if (!toast) return;
@@ -24,7 +24,11 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  function navigateWithToast(path: string, message: string, type: "info" | "success") {
+  function navigateWithToast(
+    path: string,
+    message: string,
+    type: "info" | "success",
+  ) {
     setToast({ message, type });
     window.setTimeout(() => router.push(path), 220);
   }
@@ -32,14 +36,23 @@ export default function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <div className="rr-motion-float pointer-events-none absolute -left-28 top-24 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
-      <div className="rr-motion-float rr-motion-float-delay pointer-events-none absolute -right-16 top-[30rem] h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
+      <div className="rr-motion-float rr-motion-float-delay pointer-events-none absolute -right-16 top-120 h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
       <div className="mx-auto w-full max-w-7xl px-6 pb-14 pt-6 sm:px-10">
         <header className="rr-motion-rise flex items-center justify-between gap-4">
           <Link href="/" aria-label="Go to RefereeRequest home">
-            <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={44} height={44} priority />
+            <Image
+              src="/referee-request-logo.svg"
+              alt="RefereeRequest"
+              width={44}
+              height={44}
+              priority
+            />
           </Link>
           <nav className="hidden items-center gap-10 text-sm text-muted md:flex">
-            <a href="#how-it-works" className="transition-colors hover:text-foreground">
+            <a
+              href="#how-it-works"
+              className="transition-colors hover:text-foreground"
+            >
               The method
             </a>
             <a href="#why" className="transition-colors hover:text-foreground">
@@ -48,25 +61,52 @@ export default function Home() {
           </nav>
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
-              <Button variant="secondary" onClick={() => navigateWithToast("/dashboard", "Opening your dashboard...", "info")}>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  navigateWithToast(
+                    "/dashboard",
+                    "Opening your dashboard...",
+                    "info",
+                  )
+                }
+              >
                 Dashboard
               </Button>
             ) : (
-              <Button variant="secondary" onClick={() => navigateWithToast("/signin", "Opening sign in...", "info")}>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  navigateWithToast("/signin", "Opening sign in...", "info")
+                }
+              >
                 Sign in
               </Button>
             )}
             <Button
               onClick={() =>
                 isAuthenticated
-                  ? navigateWithToast("/dashboard/requests/new", "Opening request builder...", "success")
-                  : navigateWithToast("/signup", "Starting your request...", "success")
+                  ? navigateWithToast(
+                      "/dashboard/requests/new",
+                      "Opening request builder...",
+                      "success",
+                    )
+                  : navigateWithToast(
+                      "/signup",
+                      "Starting your request...",
+                      "success",
+                    )
               }
             >
               Start a request
             </Button>
             {isAuthenticated ? (
-              <Button variant="secondary" onClick={() => navigateWithToast("/signout", "Signing you out...", "info")}>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  navigateWithToast("/signout", "Signing you out...", "info")
+                }
+              >
                 Sign out
               </Button>
             ) : null}
@@ -90,8 +130,16 @@ export default function Home() {
                 className="rounded-full px-6"
                 onClick={() =>
                   isAuthenticated
-                    ? navigateWithToast("/dashboard/requests/new", "Opening request builder...", "success")
-                    : navigateWithToast("/signup", "Redirecting to Google sign up...", "success")
+                    ? navigateWithToast(
+                        "/dashboard/requests/new",
+                        "Opening request builder...",
+                        "success",
+                      )
+                    : navigateWithToast(
+                        "/signup",
+                        "Redirecting to Google sign up...",
+                        "success",
+                      )
                 }
               >
                 <span className="inline-flex items-center gap-2">
@@ -114,8 +162,12 @@ export default function Home() {
           <article className="rr-paper-card rr-motion-float relative rounded-[22px] border border-[#c8d5e7] bg-[#f4f8ff] shadow-[0_24px_52px_-34px_rgba(24,20,38,0.5)]">
             <div className="flex items-center justify-between border-b border-[#c8d5e7] px-5 py-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">Workspace</p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">Good morning, Alex</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
+                  Workspace
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  Good morning, Alex
+                </p>
               </div>
               <span className="rounded-xl bg-[#c9f3ef] px-3 py-1 text-xs font-semibold text-[#0d5b54]">
                 3 active
@@ -123,27 +175,39 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-3 border-b border-[#c8d5e7] text-foreground">
               <div className="border-r border-[#c8d5e7] px-5 py-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">Active</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
+                  Active
+                </p>
                 <p className="mt-2 text-5xl font-semibold">03</p>
               </div>
               <div className="border-r border-[#c8d5e7] px-5 py-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">Submitted</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
+                  Submitted
+                </p>
                 <p className="mt-2 text-5xl font-semibold">12</p>
               </div>
               <div className="px-5 py-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">On time</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
+                  On time
+                </p>
                 <p className="mt-2 text-5xl font-semibold">98%</p>
               </div>
             </div>
             <div className="px-5 py-5">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-lg font-semibold text-foreground">Recent activity</p>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">View all</p>
+                <p className="text-lg font-semibold text-foreground">
+                  Recent activity
+                </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  View all
+                </p>
               </div>
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-lg font-semibold text-foreground">Dr. Hart</p>
+                    <p className="text-lg font-semibold text-foreground">
+                      Dr. Hart
+                    </p>
                     <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
@@ -155,7 +219,9 @@ export default function Home() {
                 </div>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-lg font-semibold text-foreground">J. Cole</p>
+                    <p className="text-lg font-semibold text-foreground">
+                      J. Cole
+                    </p>
                     <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
@@ -167,7 +233,9 @@ export default function Home() {
                 </div>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-lg font-semibold text-foreground">L. Smith</p>
+                    <p className="text-lg font-semibold text-foreground">
+                      L. Smith
+                    </p>
                     <p className="text-sm text-muted">Request</p>
                   </div>
                   <div className="text-right">
@@ -182,12 +250,17 @@ export default function Home() {
           </article>
         </section>
 
-        <section id="why" className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8">
+        <section
+          id="why"
+          className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 sm:p-8"
+        >
           <span className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-primary/8 blur-2xl" />
           <div className="grid gap-6 lg:grid-cols-[1fr_1.65fr]">
             <article className="rr-tilt-3d rr-motion-rise relative rounded-2xl border border-border bg-background/80 p-6">
               <span className="pointer-events-none absolute -right-6 bottom-4 h-14 w-14 rounded-full border border-primary/30" />
-              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The shift</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">
+                The shift
+              </p>
               <h2 className="mt-4 text-5xl font-semibold leading-[0.95] tracking-tight text-foreground">
                 Less follow-up.
                 <br />
@@ -197,27 +270,45 @@ export default function Home() {
             <div className="grid gap-4 sm:grid-cols-3">
               <article className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5">
                 <span className="pointer-events-none absolute -right-5 -top-5 h-16 w-16 rounded-full bg-primary/14" />
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">01</p>
-                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">One source</p>
-                <p className="mt-3 text-lg leading-relaxed text-muted">Context, files, deadline together.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  01
+                </p>
+                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">
+                  One source
+                </p>
+                <p className="mt-3 text-lg leading-relaxed text-muted">
+                  Context, files, deadline together.
+                </p>
               </article>
               <article
                 className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5"
                 style={{ animationDelay: "120ms" }}
               >
                 <span className="pointer-events-none absolute -left-6 bottom-2 h-14 w-14 rounded-2xl border border-primary/30" />
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">02</p>
-                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">Clear signals</p>
-                <p className="mt-3 text-lg leading-relaxed text-muted">Know opened, pending, done.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  02
+                </p>
+                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">
+                  Clear signals
+                </p>
+                <p className="mt-3 text-lg leading-relaxed text-muted">
+                  Know opened, pending, done.
+                </p>
               </article>
               <article
                 className="rr-tilt-3d rr-motion-rise relative overflow-hidden rounded-2xl border border-border bg-[#f8f2e8] p-5"
                 style={{ animationDelay: "220ms" }}
               >
                 <span className="pointer-events-none absolute -right-7 bottom-3 h-16 w-16 rounded-full border border-primary/35" />
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">03</p>
-                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">Human-friendly</p>
-                <p className="mt-3 text-lg leading-relaxed text-muted">Referees submit without friction.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  03
+                </p>
+                <p className="mt-3 text-4xl font-semibold leading-[0.92] text-foreground">
+                  Human-friendly
+                </p>
+                <p className="mt-3 text-lg leading-relaxed text-muted">
+                  Referees submit without friction.
+                </p>
               </article>
             </div>
           </div>
@@ -228,21 +319,31 @@ export default function Home() {
             <span className="pointer-events-none absolute -left-8 -top-8 h-32 w-32 rounded-full bg-secondary/8 blur-2xl" />
             <div className="grid gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">The method</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-primary">
+                  The method
+                </p>
                 <h2 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.95] tracking-tight text-foreground sm:text-7xl">
                   A request that knows where it is going.
                 </h2>
-                <p className="mt-5 max-w-2xl text-xl leading-relaxed text-muted">Three moves. One clear workflow.</p>
+                <p className="mt-5 max-w-2xl text-xl leading-relaxed text-muted">
+                  Three moves. One clear workflow.
+                </p>
               </div>
               <div className="grid gap-3">
                 <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3">
-                  <p className="text-sm font-semibold text-foreground">Build request</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Build request
+                  </p>
                 </article>
                 <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3 sm:translate-x-6">
-                  <p className="text-sm font-semibold text-foreground">Send secure link</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Send secure link
+                  </p>
                 </article>
                 <article className="rr-tilt-3d rounded-2xl border border-border bg-background/75 px-4 py-3">
-                  <p className="text-sm font-semibold text-foreground">Track status</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    Track status
+                  </p>
                 </article>
               </div>
             </div>
@@ -251,51 +352,85 @@ export default function Home() {
 
         <section className="grid gap-4 pb-12 lg:grid-cols-[1.25fr_0.75fr]">
           <article className="rr-tilt-3d rounded-3xl border border-border bg-surface p-6 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Confidence board</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+              Confidence board
+            </p>
             <h3 className="mt-3 text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
               Calm visibility from first ask to final reference.
             </h3>
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
               <div className="rounded-xl border border-border bg-background/75 p-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary">Signal</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">Opened</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-primary">
+                  Signal
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  Opened
+                </p>
               </div>
               <div className="rounded-xl border border-border bg-background/75 p-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary">Signal</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">Pending</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-primary">
+                  Signal
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  Pending
+                </p>
               </div>
               <div className="rounded-xl border border-border bg-background/75 p-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary">Signal</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">Submitted</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-primary">
+                  Signal
+                </p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  Submitted
+                </p>
               </div>
             </div>
           </article>
           <article className="rr-tilt-3d relative overflow-hidden rounded-3xl border border-border bg-[#f8f2e8] p-6">
             <span className="pointer-events-none absolute -right-10 -top-8 h-28 w-28 rounded-full bg-primary/15" />
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Zero friction</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+              Zero friction
+            </p>
             <p className="mt-3 text-3xl font-semibold leading-tight text-foreground">
               Referees stay account-free.
             </p>
-            <p className="mt-3 text-base text-muted">Open link. Upload file. Submit.</p>
+            <p className="mt-3 text-base text-muted">
+              Open link. Upload file. Submit.
+            </p>
           </article>
         </section>
 
         <section className="grid gap-4 pb-12 sm:grid-cols-2 lg:grid-cols-4">
           <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">Academic</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">University</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary">
+              Academic
+            </p>
+            <p className="mt-2 text-lg font-semibold text-foreground">
+              University
+            </p>
           </article>
           <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">Funding</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">Scholarship</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary">
+              Funding
+            </p>
+            <p className="mt-2 text-lg font-semibold text-foreground">
+              Scholarship
+            </p>
           </article>
           <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">Career</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">Employment</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary">
+              Career
+            </p>
+            <p className="mt-2 text-lg font-semibold text-foreground">
+              Employment
+            </p>
           </article>
           <article className="rr-tilt-3d rounded-2xl border border-border bg-surface p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-primary">Professional</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">Membership</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary">
+              Professional
+            </p>
+            <p className="mt-2 text-lg font-semibold text-foreground">
+              Membership
+            </p>
           </article>
         </section>
 
@@ -312,7 +447,9 @@ export default function Home() {
           <Button
             size="lg"
             className="mt-8 rounded-full border border-primary/40 bg-primary px-6 hover:bg-primary/90"
-            onClick={() => navigateWithToast("/signup", "Opening signup...", "success")}
+            onClick={() =>
+              navigateWithToast("/signup", "Opening signup...", "success")
+            }
           >
             <span className="inline-flex items-center gap-2">
               Start free
@@ -325,39 +462,63 @@ export default function Home() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <Link href="/" aria-label="Go to RefereeRequest home">
-                <Image src="/referee-request-logo.svg" alt="RefereeRequest" width={36} height={36} />
+                <Image
+                  src="/referee-request-logo.svg"
+                  alt="RefereeRequest"
+                  width={36}
+                  height={36}
+                />
               </Link>
               <span>References without the chasing.</span>
             </div>
             <div className="flex flex-wrap items-center gap-5">
-              <a href="#how-it-works" className="transition-colors hover:text-foreground">
+              <a
+                href="#how-it-works"
+                className="transition-colors hover:text-foreground"
+              >
                 The method
               </a>
-              <a href="#why" className="transition-colors hover:text-foreground">
+              <a
+                href="#why"
+                className="transition-colors hover:text-foreground"
+              >
                 Why it works
               </a>
               {isAuthenticated ? (
-                <Link href="/signout" className="transition-colors hover:text-foreground">
+                <Link
+                  href="/signout"
+                  className="transition-colors hover:text-foreground"
+                >
                   Sign out
                 </Link>
               ) : (
-                <Link href="/signin" className="transition-colors hover:text-foreground">
+                <Link
+                  href="/signin"
+                  className="transition-colors hover:text-foreground"
+                >
                   Google sign in
                 </Link>
               )}
-              <a href="mailto:hello@refereerequest.com" className="transition-colors hover:text-foreground">
+              <a
+                href="mailto:hello@refereerequest.com"
+                className="transition-colors hover:text-foreground"
+              >
                 hello@refereerequest.com
               </a>
             </div>
           </div>
-          <p className="mt-4 text-xs">© {new Date().getFullYear()} RefereeRequest. All rights reserved.</p>
+          <p className="mt-4 text-xs">
+            © {new Date().getFullYear()} RefereeRequest. All rights reserved.
+          </p>
         </footer>
       </div>
 
       {toast ? (
         <div
           className={`rr-toast fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] rounded-lg border px-4 py-3 text-sm text-white shadow-lg ${
-            toast.type === "success" ? "border-primary/40 bg-primary" : "border-secondary/40 bg-secondary"
+            toast.type === "success"
+              ? "border-primary/40 bg-primary"
+              : "border-secondary/40 bg-secondary"
           }`}
         >
           {toast.message}

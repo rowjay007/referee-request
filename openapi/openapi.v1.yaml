@@ -102,6 +102,12 @@ paths:
           description: Unauthorized
     post:
       operationId: createCandidateRequest
+    requestBody:
+    required: true
+    content:
+      application/json:
+      schema:
+        $ref: "#/components/schemas/ReferenceRequestInput"
       responses:
         "201":
           description: Request created
@@ -126,6 +132,122 @@ paths:
           description: Unauthorized
         "404":
           description: Not found
+    patch:
+      operationId: updateCandidateDraft
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ReferenceRequestInput"
+                - type: object
+                  required: [updatedAt]
+                  properties:
+                    updatedAt: { type: string, format: date-time }
+      responses:
+        "200": { description: Draft updated }
+        "409": { description: Not a draft or optimistic concurrency conflict }
+  /api/v1/requests/{requestId}/invitations:
+    get:
+      operationId: listRefereeInvitationHistory
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200": { description: Historical invitation attempts returned }
+  /api/v1/requests/{requestId}/replace-referee:
+    post:
+      operationId: replaceReferee
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RefereeContactInput" }
+      responses:
+        "200": { description: Active invitation superseded and replacement sent }
+        "409": { description: Replacement not allowed in current state }
+  /api/v1/requests/{requestId}/repeat:
+    post:
+      operationId: repeatReferenceRequest
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contactId: { type: string, format: uuid }
+      responses:
+        "201": { description: Packet copied into a new draft }
+  /api/v1/requests/{requestId}/outcome:
+    put:
+      operationId: setReferenceRequestOutcome
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [outcome]
+              properties:
+                outcome: { type: string, enum: [successful, unsuccessful, withdrawn, unknown] }
+                note: { type: string }
+      responses:
+        "200": { description: Outcome recorded independently of lifecycle }
+  /api/v1/requests/{requestId}/submitted-reference:
+    get:
+      operationId: downloadCandidateSubmittedReference
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200": { description: Reference downloaded in non-confidential mode }
+        "403": { description: Reference is confidential }
+        "404": { description: No submitted reference }
+  /api/v1/referee-contacts:
+    get:
+      operationId: listRefereeContacts
+      responses:
+        "200": { description: Candidate contacts returned }
+    post:
+      operationId: createRefereeContact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RefereeContactInput" }
+      responses:
+        "201": { description: Contact created or reused }
+  /api/v1/referee-contacts/{contactId}:
+    put:
+      operationId: updateRefereeContact
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RefereeContactInput" }
+      responses:
+        "200": { description: Contact updated }
+    delete:
+      operationId: deleteRefereeContact
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Contact deleted }
   /api/v1/requests/{requestId}/readiness:
     get:
       operationId: getCandidateRequestReadiness
@@ -311,6 +433,17 @@ paths:
           description: Decision already made or reference already submitted
         "410":
           description: Expired token
+  /api/v1/referee/{token}/in-progress:
+    post:
+      operationId: markRefereeInProgress
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Work marked in progress idempotently }
+        "409": { description: Invitation has not been accepted }
   /api/v1/referee/{token}/documents/{documentId}:
     get:
       operationId: downloadRefereeSupportingDocument
@@ -402,3 +535,57 @@ paths:
           description: Validation error
         "401":
           description: Invalid dispatch token
+  /api/v1/internal/notifications/delivery/{providerMessageId}:
+    post:
+      operationId: markInvitationDelivered
+      parameters:
+        - name: providerMessageId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: X-Dispatch-Token
+          in: header
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Provider delivery recorded idempotently }
+        "404": { description: Provider message ID not found }
+components:
+  parameters:
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    RefereeContactInput:
+      type: object
+      required: [name, email]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        relationship: { type: string }
+    ReferenceRequestInput:
+      type: object
+      properties:
+        refereeName: { type: string }
+        refereeEmail: { type: string, format: email }
+        refereeRelationship: { type: string }
+        organization: { type: string }
+        role: { type: string }
+        countryCode: { type: string, minLength: 2, maxLength: 2 }
+        applicationType: { type: string }
+        submissionMethod: { type: string }
+        preferredCompletionAt: { type: string, format: date-time }
+        timezone: { type: string, example: Europe/London }
+        candidateContext: { type: string }
+        whyApplying: { type: string }
+        relationshipContext: { type: string }
+        traits: { type: string }
+        achievements: { type: string }
+        confidentialityMode: { type: string, enum: [confidential, non_confidential], default: confidential }
+        institutionName: { type: string, deprecated: true }
+        programmeName: { type: string, deprecated: true }
+        opportunityType: { type: string, deprecated: true }
+        deadlineAt: { type: string, format: date-time, deprecated: true }
+        instructions: { type: string, deprecated: true }

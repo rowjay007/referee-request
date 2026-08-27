@@ -8,6 +8,7 @@ import (
 	httputil "github.com/rowjay007/referee-request/backend/internal/httpapi/middleware"
 	"github.com/rowjay007/referee-request/backend/internal/httpapi/response"
 	"github.com/rowjay007/referee-request/backend/internal/security"
+	"github.com/rowjay007/referee-request/backend/internal/storage"
 	"github.com/rowjay007/referee-request/backend/internal/store"
 	"net/http"
 	"net/mail"
@@ -20,21 +21,35 @@ import (
 type ReferenceRequestHandler struct {
 	cfg      *config.Config
 	requests *store.ReferenceRequestStore
+	storage  storage.Store
 }
 
-func NewReferenceRequestHandler(cfg *config.Config, requests *store.ReferenceRequestStore) *ReferenceRequestHandler {
-	return &ReferenceRequestHandler{cfg: cfg, requests: requests}
+func NewReferenceRequestHandler(cfg *config.Config, requests *store.ReferenceRequestStore, documentStorage storage.Store) *ReferenceRequestHandler {
+	return &ReferenceRequestHandler{cfg: cfg, requests: requests, storage: documentStorage}
 }
 
 type createReferenceRequestPayload struct {
-	RefereeName         string `json:"refereeName"`
-	RefereeEmail        string `json:"refereeEmail"`
-	RefereeRelationship string `json:"refereeRelationship"`
-	InstitutionName     string `json:"institutionName"`
-	ProgrammeName       string `json:"programmeName"`
-	OpportunityType     string `json:"opportunityType"`
-	DeadlineAt          string `json:"deadlineAt"`
-	Instructions        string `json:"instructions"`
+	RefereeName           string `json:"refereeName"`
+	RefereeEmail          string `json:"refereeEmail"`
+	RefereeRelationship   string `json:"refereeRelationship"`
+	InstitutionName       string `json:"institutionName"`
+	ProgrammeName         string `json:"programmeName"`
+	OpportunityType       string `json:"opportunityType"`
+	DeadlineAt            string `json:"deadlineAt"`
+	Instructions          string `json:"instructions"`
+	ConfidentialityMode   string `json:"confidentialityMode"`
+	Organization          string `json:"organization"`
+	Role                  string `json:"role"`
+	CountryCode           string `json:"countryCode"`
+	ApplicationType       string `json:"applicationType"`
+	SubmissionMethod      string `json:"submissionMethod"`
+	PreferredCompletionAt string `json:"preferredCompletionAt"`
+	Timezone              string `json:"timezone"`
+	CandidateContext      string `json:"candidateContext"`
+	WhyApplying           string `json:"whyApplying"`
+	RelationshipContext   string `json:"relationshipContext"`
+	Traits                string `json:"traits"`
+	Achievements          string `json:"achievements"`
 }
 
 type requestReadinessResult struct {
@@ -63,6 +78,7 @@ func (h *ReferenceRequestHandler) Create(w http.ResponseWriter, r *http.Request)
 	payload.ProgrammeName = strings.TrimSpace(payload.ProgrammeName)
 	payload.OpportunityType = strings.TrimSpace(payload.OpportunityType)
 	payload.Instructions = strings.TrimSpace(payload.Instructions)
+	normalizeRequestPayload(&payload)
 
 	details := validateCreateReferenceRequest(payload)
 	if len(details) > 0 {
@@ -79,17 +95,38 @@ func (h *ReferenceRequestHandler) Create(w http.ResponseWriter, r *http.Request)
 		response.ValidationError(w, map[string]any{"deadlineAt": "Deadline must be in the future."})
 		return
 	}
+	preferredCompletionAt := deadlineAt
+	if payload.PreferredCompletionAt != "" {
+		preferredCompletionAt, err = time.Parse(time.RFC3339, payload.PreferredCompletionAt)
+		if err != nil {
+			response.ValidationError(w, map[string]any{"preferredCompletionAt": "Preferred completion must be an RFC3339 timestamp."})
+			return
+		}
+	}
 
 	request, err := h.requests.CreateReferenceRequest(r.Context(), store.CreateReferenceRequestInput{
-		CandidateUserID:     userID,
-		RefereeName:         payload.RefereeName,
-		RefereeEmail:        payload.RefereeEmail,
-		RefereeRelationship: payload.RefereeRelationship,
-		InstitutionName:     payload.InstitutionName,
-		ProgrammeName:       payload.ProgrammeName,
-		OpportunityType:     payload.OpportunityType,
-		DeadlineAt:          deadlineAt.UTC(),
-		Instructions:        payload.Instructions,
+		CandidateUserID:       userID,
+		RefereeName:           payload.RefereeName,
+		RefereeEmail:          payload.RefereeEmail,
+		RefereeRelationship:   payload.RefereeRelationship,
+		InstitutionName:       payload.InstitutionName,
+		ProgrammeName:         payload.ProgrammeName,
+		OpportunityType:       payload.OpportunityType,
+		DeadlineAt:            deadlineAt.UTC(),
+		Instructions:          payload.Instructions,
+		ConfidentialityMode:   payload.ConfidentialityMode,
+		Organization:          payload.Organization,
+		Role:                  payload.Role,
+		CountryCode:           payload.CountryCode,
+		ApplicationType:       payload.ApplicationType,
+		SubmissionMethod:      payload.SubmissionMethod,
+		PreferredCompletionAt: &preferredCompletionAt,
+		Timezone:              payload.Timezone,
+		CandidateContext:      payload.CandidateContext,
+		WhyApplying:           payload.WhyApplying,
+		RelationshipContext:   payload.RelationshipContext,
+		Traits:                payload.Traits,
+		Achievements:          payload.Achievements,
 	})
 	if err != nil {
 		response.InternalError(w)
@@ -448,25 +485,105 @@ func validateCreateReferenceRequest(payload createReferenceRequestPayload) map[s
 	if len(payload.Instructions) > 5000 {
 		details["instructions"] = "Instructions must be 5000 characters or fewer."
 	}
+	if payload.ConfidentialityMode != "confidential" && payload.ConfidentialityMode != "non_confidential" {
+		details["confidentialityMode"] = "Confidentiality mode must be confidential or non_confidential."
+	}
+	if payload.CountryCode != "" && len(payload.CountryCode) != 2 {
+		details["countryCode"] = "Country code must be a two-letter code."
+	}
+	if _, err := time.LoadLocation(payload.Timezone); err != nil {
+		details["timezone"] = "Timezone must be a valid IANA timezone."
+	}
 	return details
+}
+
+func normalizeRequestPayload(payload *createReferenceRequestPayload) {
+	payload.Organization = strings.TrimSpace(payload.Organization)
+	payload.Role = strings.TrimSpace(payload.Role)
+	payload.CountryCode = strings.ToUpper(strings.TrimSpace(payload.CountryCode))
+	payload.ApplicationType = strings.TrimSpace(payload.ApplicationType)
+	payload.SubmissionMethod = strings.TrimSpace(payload.SubmissionMethod)
+	payload.Timezone = strings.TrimSpace(payload.Timezone)
+	payload.CandidateContext = strings.TrimSpace(payload.CandidateContext)
+	payload.WhyApplying = strings.TrimSpace(payload.WhyApplying)
+	payload.RelationshipContext = strings.TrimSpace(payload.RelationshipContext)
+	payload.Traits = strings.TrimSpace(payload.Traits)
+	payload.Achievements = strings.TrimSpace(payload.Achievements)
+	payload.ConfidentialityMode = strings.TrimSpace(strings.ToLower(payload.ConfidentialityMode))
+	if payload.ConfidentialityMode == "" {
+		payload.ConfidentialityMode = "confidential"
+	}
+	if payload.Organization == "" {
+		payload.Organization = payload.InstitutionName
+	}
+	if payload.InstitutionName == "" {
+		payload.InstitutionName = payload.Organization
+	}
+	if payload.Role == "" {
+		payload.Role = payload.ProgrammeName
+	}
+	if payload.ProgrammeName == "" {
+		payload.ProgrammeName = payload.Role
+	}
+	if payload.ApplicationType == "" {
+		payload.ApplicationType = payload.OpportunityType
+	}
+	if payload.OpportunityType == "" {
+		payload.OpportunityType = payload.ApplicationType
+	}
+	if payload.CandidateContext == "" {
+		payload.CandidateContext = payload.Instructions
+	}
+	if payload.Instructions == "" {
+		payload.Instructions = payload.CandidateContext
+	}
+	if payload.RelationshipContext == "" {
+		payload.RelationshipContext = payload.RefereeRelationship
+	}
+	if payload.Timezone == "" {
+		payload.Timezone = "UTC"
+	}
+	if payload.PreferredCompletionAt == "" {
+		payload.PreferredCompletionAt = payload.DeadlineAt
+	}
+	if payload.DeadlineAt == "" {
+		payload.DeadlineAt = payload.PreferredCompletionAt
+	}
 }
 
 func requestToPayload(request store.ReferenceRequest) map[string]any {
 	return map[string]any{
-		"id":                  request.ID.String(),
-		"refereeName":         request.RefereeName,
-		"refereeEmail":        request.RefereeEmail,
-		"refereeRelationship": request.RefereeRelationship,
-		"institutionName":     request.InstitutionName,
-		"programmeName":       request.ProgrammeName,
-		"opportunityType":     request.OpportunityType,
-		"deadlineAt":          request.DeadlineAt.UTC().Format(time.RFC3339),
-		"instructions":        request.Instructions,
-		"status":              request.Status,
-		"sentAt":              toOptionalRFC3339(request.SentAt),
-		"openedAt":            toOptionalRFC3339(request.OpenedAt),
-		"submittedAt":         toOptionalRFC3339(request.SubmittedAt),
-		"createdAt":           request.CreatedAt.UTC().Format(time.RFC3339),
+		"id":                    request.ID.String(),
+		"refereeName":           request.RefereeName,
+		"refereeEmail":          request.RefereeEmail,
+		"refereeRelationship":   request.RefereeRelationship,
+		"institutionName":       request.InstitutionName,
+		"programmeName":         request.ProgrammeName,
+		"opportunityType":       request.OpportunityType,
+		"deadlineAt":            request.DeadlineAt.UTC().Format(time.RFC3339),
+		"instructions":          request.Instructions,
+		"confidentialityMode":   request.ConfidentialityMode,
+		"organization":          request.Organization,
+		"role":                  request.Role,
+		"countryCode":           request.CountryCode,
+		"applicationType":       request.ApplicationType,
+		"submissionMethod":      request.SubmissionMethod,
+		"preferredCompletionAt": toOptionalRFC3339(request.PreferredCompletionAt),
+		"timezone":              request.Timezone,
+		"candidateContext":      request.CandidateContext,
+		"whyApplying":           request.WhyApplying,
+		"relationshipContext":   request.RelationshipContext,
+		"traits":                request.Traits,
+		"achievements":          request.Achievements,
+		"outcome":               request.Outcome,
+		"outcomeNote":           request.OutcomeNote,
+		"outcomeAt":             toOptionalRFC3339(request.OutcomeAt),
+		"status":                request.Status,
+		"sentAt":                toOptionalRFC3339(request.SentAt),
+		"openedAt":              toOptionalRFC3339(request.OpenedAt),
+		"submittedAt":           toOptionalRFC3339(request.SubmittedAt),
+		"createdAt":             request.CreatedAt.UTC().Format(time.RFC3339),
+		"updatedAt":             request.UpdatedAt.UTC().Format(time.RFC3339Nano),
 	}
 }
 

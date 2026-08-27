@@ -3,9 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
 import { getAuthToken } from "@/lib/auth";
-import { ReferenceRequest } from "@/lib/requests";
+import { ReferenceRequest, RefereeContact } from "@/lib/requests";
 import posthog from "posthog-js";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type CreateRequestResponse = { request: ReferenceRequest };
 type UploadDocumentResponse = {
@@ -21,6 +21,7 @@ type SendRequestResponse = {
   refereeLink: string;
   tokenExpires: string;
 };
+type ContactsResponse = { contacts: RefereeContact[] };
 
 type RequestReadinessResponse = {
   requestId: string;
@@ -57,12 +58,26 @@ export default function NewRequestPage() {
   const [refereeName, setRefereeName] = useState("");
   const [refereeEmail, setRefereeEmail] = useState("");
   const [refereeRelationship, setRefereeRelationship] = useState("");
-  const [institutionName, setInstitutionName] = useState("");
-  const [programmeName, setProgrammeName] = useState("");
-  const [opportunityType, setOpportunityType] = useState("");
+  const [contacts, setContacts] = useState<RefereeContact[]>([]);
+  const [organization, setOrganization] = useState("");
+  const [role, setRole] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [applicationType, setApplicationType] = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
+  const [submissionMethod, setSubmissionMethod] = useState("");
   const [deadlineAt, setDeadlineAt] = useState("");
-  const [instructions, setInstructions] = useState("");
+  const [preferredCompletionAt, setPreferredCompletionAt] = useState("");
+  const [timezone, setTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
+  const [candidateContext, setCandidateContext] = useState("");
+  const [whyApplying, setWhyApplying] = useState("");
+  const [relationshipContext, setRelationshipContext] = useState("");
+  const [traits, setTraits] = useState("");
+  const [achievements, setAchievements] = useState("");
+  const [confidentialityMode, setConfidentialityMode] = useState<
+    "confidential" | "non_confidential"
+  >("confidential");
   const [files, setFiles] = useState<FileList | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -73,9 +88,17 @@ export default function NewRequestPage() {
 
   const selectedPurpose = useMemo(
     () =>
-      opportunityType === "other" ? customPurpose.trim() : opportunityType,
-    [opportunityType, customPurpose],
+      applicationType === "other" ? customPurpose.trim() : applicationType,
+    [applicationType, customPurpose],
   );
+
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+    apiRequest<ContactsResponse>("/referee-contacts", { token })
+      .then((data) => setContacts(data.contacts))
+      .catch(() => setContacts([]));
+  }, []);
 
   const localReadiness = useMemo(() => {
     const checklist = {
@@ -84,11 +107,11 @@ export default function NewRequestPage() {
         Boolean(refereeEmail.trim()) &&
         Boolean(refereeRelationship.trim()),
       applicationPurpose:
-        Boolean(institutionName.trim()) &&
-        Boolean(programmeName.trim()) &&
+        Boolean(organization.trim()) &&
+        Boolean(role.trim()) &&
         Boolean(selectedPurpose.trim()),
       deadline: Boolean(deadlineAt),
-      candidateContext: Boolean(instructions.trim()),
+      candidateContext: Boolean(candidateContext.trim()),
       supportingInformation: Boolean(files && files.length > 0),
     };
 
@@ -105,25 +128,27 @@ export default function NewRequestPage() {
     refereeName,
     refereeEmail,
     refereeRelationship,
-    institutionName,
-    programmeName,
+    organization,
+    role,
     selectedPurpose,
     deadlineAt,
-    instructions,
+    candidateContext,
     files,
   ]);
 
   function nextStep() {
     if (step === 1) {
       if (
-        !institutionName.trim() ||
-        !programmeName.trim() ||
-        !opportunityType
+        !organization.trim() ||
+        !role.trim() ||
+        !applicationType ||
+        !submissionMethod.trim() ||
+        (countryCode.trim() && countryCode.trim().length !== 2)
       ) {
         setError("Please complete application details before continuing.");
         return;
       }
-      if (opportunityType === "other" && !customPurpose.trim()) {
+      if (applicationType === "other" && !customPurpose.trim()) {
         setError("Please enter a custom purpose.");
         return;
       }
@@ -138,8 +163,12 @@ export default function NewRequestPage() {
         return;
       }
     }
-    if (step === 4 && !deadlineAt) {
-      setError("Please set a deadline before continuing.");
+    if (step === 3 && (!candidateContext.trim() || !whyApplying.trim())) {
+      setError("Please add candidate context and why you are applying.");
+      return;
+    }
+    if (step === 4 && (!deadlineAt || !preferredCompletionAt || !timezone)) {
+      setError("Please complete the timing details before continuing.");
       return;
     }
     setError("");
@@ -179,6 +208,7 @@ export default function NewRequestPage() {
 
     try {
       const deadlineDate = new Date(deadlineAt);
+      const preferredCompletionDate = new Date(preferredCompletionAt);
       const created = await apiRequest<CreateRequestResponse>("/requests", {
         method: "POST",
         token,
@@ -186,11 +216,24 @@ export default function NewRequestPage() {
           refereeName,
           refereeEmail,
           refereeRelationship,
-          institutionName,
-          programmeName,
+          institutionName: organization,
+          programmeName: role,
           opportunityType: selectedPurpose,
           deadlineAt: deadlineDate.toISOString(),
-          instructions,
+          instructions: candidateContext,
+          confidentialityMode,
+          organization,
+          role,
+          countryCode: countryCode.toUpperCase(),
+          applicationType: selectedPurpose,
+          submissionMethod,
+          preferredCompletionAt: preferredCompletionDate.toISOString(),
+          timezone,
+          candidateContext,
+          whyApplying,
+          relationshipContext,
+          traits,
+          achievements,
         },
       });
 
@@ -285,8 +328,8 @@ export default function NewRequestPage() {
                 </span>
                 <input
                   required
-                  value={institutionName}
-                  onChange={(event) => setInstitutionName(event.target.value)}
+                  value={organization}
+                  onChange={(event) => setOrganization(event.target.value)}
                   className="w-full rounded-md border border-border px-3 py-2 outline-none"
                 />
               </label>
@@ -296,8 +339,8 @@ export default function NewRequestPage() {
                 </span>
                 <input
                   required
-                  value={programmeName}
-                  onChange={(event) => setProgrammeName(event.target.value)}
+                  value={role}
+                  onChange={(event) => setRole(event.target.value)}
                   className="w-full rounded-md border border-border px-3 py-2 outline-none"
                 />
               </label>
@@ -308,8 +351,8 @@ export default function NewRequestPage() {
               </span>
               <select
                 required
-                value={opportunityType}
-                onChange={(event) => setOpportunityType(event.target.value)}
+                value={applicationType}
+                onChange={(event) => setApplicationType(event.target.value)}
                 className="w-full rounded-md border border-border px-3 py-2 outline-none"
               >
                 <option value="">Select one</option>
@@ -320,7 +363,7 @@ export default function NewRequestPage() {
                 ))}
               </select>
             </label>
-            {opportunityType === "other" ? (
+            {applicationType === "other" ? (
               <label className="block space-y-1">
                 <span className="text-sm text-foreground">Custom purpose</span>
                 <input
@@ -331,6 +374,41 @@ export default function NewRequestPage() {
                 />
               </label>
             ) : null}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1">
+                <span className="text-sm text-foreground">
+                  ISO country code
+                </span>
+                <input
+                  required
+                  minLength={2}
+                  maxLength={2}
+                  value={countryCode}
+                  onChange={(event) =>
+                    setCountryCode(event.target.value.toUpperCase())
+                  }
+                  placeholder="GB"
+                  className="w-full rounded-md border border-border px-3 py-2 uppercase outline-none"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-sm text-foreground">
+                  Submission method
+                </span>
+                <select
+                  required
+                  value={submissionMethod}
+                  onChange={(event) => setSubmissionMethod(event.target.value)}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                >
+                  <option value="">Select one</option>
+                  <option value="email">Email</option>
+                  <option value="portal">Application portal</option>
+                  <option value="direct_upload">Direct upload</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+            </div>
           </section>
         ) : null}
 
@@ -339,6 +417,35 @@ export default function NewRequestPage() {
             <h2 className="text-lg font-semibold text-foreground">
               2. Your referee
             </h2>
+            {contacts.length > 0 ? (
+              <label className="block space-y-1">
+                <span className="text-sm text-foreground">
+                  Use a saved contact
+                </span>
+                <select
+                  defaultValue=""
+                  onChange={(event) => {
+                    const contact = contacts.find(
+                      (item) => item.id === event.target.value,
+                    );
+                    if (!contact) return;
+                    setRefereeName(contact.name);
+                    setRefereeEmail(contact.email);
+                    setRefereeRelationship(contact.relationship);
+                    setRelationshipContext(contact.relationship);
+                    posthog.capture("referee_contact_selected");
+                  }}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                >
+                  <option value="">Enter someone new</option>
+                  {contacts.map((contact) => (
+                    <option key={contact.id} value={contact.id}>
+                      {contact.name} ({contact.email})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-1">
                 <span className="text-sm text-foreground">Referee name</span>
@@ -369,6 +476,18 @@ export default function NewRequestPage() {
                 className="w-full rounded-md border border-border px-3 py-2 outline-none"
               />
             </label>
+            <label className="block space-y-1">
+              <span className="text-sm text-foreground">
+                Relationship context
+              </span>
+              <textarea
+                required
+                rows={3}
+                value={relationshipContext}
+                onChange={(event) => setRelationshipContext(event.target.value)}
+                className="w-full rounded-md border border-border px-3 py-2 outline-none"
+              />
+            </label>
           </section>
         ) : null}
 
@@ -378,17 +497,52 @@ export default function NewRequestPage() {
               3. Supporting information
             </h2>
             <label className="block space-y-1">
-              <span className="text-sm text-foreground">
-                Instructions or context
-              </span>
+              <span className="text-sm text-foreground">Candidate context</span>
               <textarea
-                value={instructions}
-                onChange={(event) => setInstructions(event.target.value)}
+                required
+                value={candidateContext}
+                onChange={(event) => setCandidateContext(event.target.value)}
                 rows={5}
                 maxLength={5000}
                 className="w-full rounded-md border border-border px-3 py-2 outline-none"
               />
             </label>
+            <label className="block space-y-1">
+              <span className="text-sm text-foreground">
+                Why are you applying?
+              </span>
+              <textarea
+                required
+                rows={4}
+                value={whyApplying}
+                onChange={(event) => setWhyApplying(event.target.value)}
+                className="w-full rounded-md border border-border px-3 py-2 outline-none"
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1">
+                <span className="text-sm text-foreground">
+                  Traits to highlight
+                </span>
+                <textarea
+                  rows={4}
+                  value={traits}
+                  onChange={(event) => setTraits(event.target.value)}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-sm text-foreground">
+                  Achievements to highlight
+                </span>
+                <textarea
+                  rows={4}
+                  value={achievements}
+                  onChange={(event) => setAchievements(event.target.value)}
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
+              </label>
+            </div>
             <label className="block space-y-1">
               <span className="text-sm text-foreground">
                 Supporting documents (optional)
@@ -401,6 +555,63 @@ export default function NewRequestPage() {
                 className="w-full rounded-md border border-border px-3 py-2"
               />
             </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1">
+                <span className="text-sm text-foreground">
+                  Preferred completion
+                </span>
+                <input
+                  required
+                  type="datetime-local"
+                  value={preferredCompletionAt}
+                  onChange={(event) =>
+                    setPreferredCompletionAt(event.target.value)
+                  }
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-sm text-foreground">IANA timezone</span>
+                <input
+                  required
+                  value={timezone}
+                  onChange={(event) => setTimezone(event.target.value)}
+                  placeholder="Europe/London"
+                  className="w-full rounded-md border border-border px-3 py-2 outline-none"
+                />
+              </label>
+            </div>
+            <fieldset className="space-y-2 rounded-lg border border-border p-4">
+              <legend className="px-1 text-sm font-medium text-foreground">
+                Reference confidentiality
+              </legend>
+              <label className="flex items-start gap-2 text-sm text-foreground">
+                <input
+                  type="radio"
+                  name="confidentiality"
+                  value="confidential"
+                  checked={confidentialityMode === "confidential"}
+                  onChange={() => setConfidentialityMode("confidential")}
+                />
+                <span>
+                  <strong>Confidential.</strong> You will not be able to
+                  download the submitted reference.
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-sm text-foreground">
+                <input
+                  type="radio"
+                  name="confidentiality"
+                  value="non_confidential"
+                  checked={confidentialityMode === "non_confidential"}
+                  onChange={() => setConfidentialityMode("non_confidential")}
+                />
+                <span>
+                  <strong>Shared with me.</strong> You can download the
+                  submitted reference.
+                </span>
+              </label>
+            </fieldset>
           </section>
         ) : null}
 
@@ -434,8 +645,7 @@ export default function NewRequestPage() {
             </h2>
             <div className="rounded-xl border border-border bg-background/70 p-4 text-sm text-foreground">
               <p>
-                <strong>Application:</strong> {institutionName} ·{" "}
-                {programmeName}
+                <strong>Application:</strong> {organization} · {role}
               </p>
               <p className="mt-1">
                 <strong>Purpose:</strong> {selectedPurpose}
@@ -446,6 +656,12 @@ export default function NewRequestPage() {
               <p className="mt-1">
                 <strong>Deadline:</strong>{" "}
                 {deadlineAt ? new Date(deadlineAt).toLocaleString() : "Not set"}
+              </p>
+              <p className="mt-1">
+                <strong>Confidentiality:</strong>{" "}
+                {confidentialityMode === "confidential"
+                  ? "Confidential"
+                  : "Shared with me"}
               </p>
             </div>
             <div className="rounded-xl border border-border bg-background/70 p-4">
@@ -513,7 +729,10 @@ export default function NewRequestPage() {
       </form>
 
       {message ? (
-        <p className="rounded-lg border border-success/20 bg-green-50 px-4 py-3 text-sm text-success">
+        <p
+          aria-live="polite"
+          className="rounded-lg border border-success/20 bg-green-50 px-4 py-3 text-sm text-success"
+        >
           {message}
         </p>
       ) : null}
@@ -536,7 +755,10 @@ export default function NewRequestPage() {
         </div>
       ) : null}
       {error ? (
-        <p className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error">
+        <p
+          role="alert"
+          className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error"
+        >
           {error}
         </p>
       ) : null}

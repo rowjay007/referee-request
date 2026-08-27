@@ -44,15 +44,26 @@ func TestNotificationActionsRecordTimelineEvents(t *testing.T) {
 
 	t.Run("manual reminder", func(t *testing.T) {
 		requestID := createNotificationTestRequest(t, ctx, pool, candidateID, "sent")
-		_, err := pool.Exec(
+		var invitationID uuid.UUID
+		err := pool.QueryRow(
 			ctx,
-			`INSERT INTO referee_invitations (reference_request_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
+			`INSERT INTO referee_invitations (reference_request_id, token_hash, expires_at)
+			 VALUES ($1, $2, $3)
+			 RETURNING id`,
 			requestID,
 			uuid.NewString(),
 			time.Now().UTC().Add(48*time.Hour),
-		)
+		).Scan(&invitationID)
 		if err != nil {
 			t.Fatalf("create invitation: %v", err)
+		}
+		if _, err := pool.Exec(
+			ctx,
+			`UPDATE reference_requests SET active_invitation_id = $2 WHERE id = $1`,
+			requestID,
+			invitationID,
+		); err != nil {
+			t.Fatalf("activate invitation: %v", err)
 		}
 
 		if err := store.QueueManualReminderForCandidate(ctx, requestID, candidateID); err != nil {

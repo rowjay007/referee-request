@@ -16,40 +16,62 @@ var ErrRefereeDecisionAlreadyMade = errors.New("referee decision already made")
 var ErrRefereeDecisionRequired = errors.New("referee decision required before submission")
 
 type RefereeInvitation struct {
-	ID                 uuid.UUID
-	ReferenceRequestID uuid.UUID
-	TokenHash          string
-	ExpiresAt          time.Time
-	RevokedAt          *time.Time
-	OpenedAt           *time.Time
-	Decision           *string
-	DecidedAt          *time.Time
-	SubmittedAt        *time.Time
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-}
-
-type RefereeRequestView struct {
-	InvitationID        uuid.UUID
+	ID                  uuid.UUID
 	ReferenceRequestID  uuid.UUID
-	CandidateUserID     uuid.UUID
-	CandidateName       string
-	CandidateEmail      string
-	RefereeName         string
-	RefereeEmail        string
-	RefereeRelationship string
-	InstitutionName     string
-	ProgrammeName       string
-	OpportunityType     string
-	DeadlineAt          time.Time
-	Instructions        string
-	Status              string
+	TokenHash           string
 	ExpiresAt           time.Time
 	RevokedAt           *time.Time
 	OpenedAt            *time.Time
 	Decision            *string
 	DecidedAt           *time.Time
 	SubmittedAt         *time.Time
+	RefereeName         string
+	RefereeEmail        string
+	RefereeRelationship string
+	DeliveredAt         *time.Time
+	InProgressAt        *time.Time
+	SupersededAt        *time.Time
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
+type RefereeRequestView struct {
+	InvitationID          uuid.UUID
+	ReferenceRequestID    uuid.UUID
+	CandidateUserID       uuid.UUID
+	CandidateName         string
+	CandidateEmail        string
+	RefereeName           string
+	RefereeEmail          string
+	RefereeRelationship   string
+	InstitutionName       string
+	ProgrammeName         string
+	OpportunityType       string
+	DeadlineAt            time.Time
+	Instructions          string
+	Status                string
+	ExpiresAt             time.Time
+	RevokedAt             *time.Time
+	OpenedAt              *time.Time
+	Decision              *string
+	DecidedAt             *time.Time
+	SubmittedAt           *time.Time
+	DeliveredAt           *time.Time
+	InProgressAt          *time.Time
+	SupersededAt          *time.Time
+	ConfidentialityMode   string
+	Organization          string
+	Role                  string
+	CountryCode           string
+	ApplicationType       string
+	SubmissionMethod      string
+	PreferredCompletionAt *time.Time
+	Timezone              string
+	CandidateContext      string
+	WhyApplying           string
+	RelationshipContext   string
+	Traits                string
+	Achievements          string
 }
 
 type RefereeDecisionInput struct {
@@ -99,7 +121,7 @@ func (s *ReferenceRequestStore) SendReferenceRequestWithInvitation(
 		`UPDATE reference_requests
 		 SET status = 'sent', sent_at = NOW(), updated_at = NOW()
 		 WHERE id = $1 AND candidate_user_id = $2 AND status = 'draft'
-		 RETURNING id, candidate_user_id, referee_name, referee_email, referee_relationship, institution_name, programme_name, opportunity_type, deadline_at, instructions, status, sent_at, opened_at, submitted_at, created_at, updated_at`,
+		 RETURNING `+referenceRequestColumns,
 		requestID,
 		candidateUserID,
 	))
@@ -126,12 +148,16 @@ func (s *ReferenceRequestStore) SendReferenceRequestWithInvitation(
 	invitation := &RefereeInvitation{}
 	insertErr := tx.QueryRow(
 		ctx,
-		`INSERT INTO referee_invitations (reference_request_id, token_hash, expires_at)
-		 VALUES ($1, $2, $3)
-		 RETURNING id, reference_request_id, token_hash, expires_at, revoked_at, opened_at, decision, decided_at, submitted_at, created_at, updated_at`,
+		`INSERT INTO referee_invitations (reference_request_id, token_hash, expires_at, referee_name, referee_email, referee_relationship)
+		 VALUES ($1, $2, $3, $4, $5, $6)
+		 RETURNING id, reference_request_id, token_hash, expires_at, revoked_at, opened_at, decision, decided_at, submitted_at, created_at, updated_at,
+		 referee_name, referee_email, referee_relationship, delivered_at, in_progress_at, superseded_at`,
 		requestID,
 		tokenHash,
 		expiresAt,
+		request.RefereeName,
+		request.RefereeEmail,
+		request.RefereeRelationship,
 	).Scan(
 		&invitation.ID,
 		&invitation.ReferenceRequestID,
@@ -144,9 +170,19 @@ func (s *ReferenceRequestStore) SendReferenceRequestWithInvitation(
 		&invitation.SubmittedAt,
 		&invitation.CreatedAt,
 		&invitation.UpdatedAt,
+		&invitation.RefereeName,
+		&invitation.RefereeEmail,
+		&invitation.RefereeRelationship,
+		&invitation.DeliveredAt,
+		&invitation.InProgressAt,
+		&invitation.SupersededAt,
 	)
 	if insertErr != nil {
 		return nil, nil, insertErr
+	}
+	_, err = tx.Exec(ctx, `UPDATE reference_requests SET active_invitation_id=$2 WHERE id=$1`, requestID, invitation.ID)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	_, eventErr := tx.Exec(
@@ -187,9 +223,10 @@ func (s *ReferenceRequestStore) SendReferenceRequestWithInvitation(
 	_, queueErr := tx.Exec(
 		ctx,
 		`INSERT INTO notification_outbox (
-		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
-		 ) VALUES ($1, 'invitation_email', 'email', $2, $3, $4, $5, 'queued', 0, 5, NOW())`,
+		    reference_request_id, referee_invitation_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
+		 ) VALUES ($1, $2, 'invitation_email', 'email', $3, $4, $5, $6, 'queued', 0, 5, NOW())`,
 		request.ID,
+		invitation.ID,
 		request.RefereeEmail,
 		request.RefereeName,
 		subject,
@@ -213,9 +250,9 @@ func (s *ReferenceRequestStore) GetRefereeRequestByTokenHash(ctx context.Context
 			r.candidate_user_id,
 			u.full_name,
 			u.email,
-			r.referee_name,
-			r.referee_email,
-			r.referee_relationship,
+			ri.referee_name,
+			ri.referee_email,
+			ri.referee_relationship,
 			r.institution_name,
 			r.programme_name,
 			r.opportunity_type,
@@ -227,7 +264,13 @@ func (s *ReferenceRequestStore) GetRefereeRequestByTokenHash(ctx context.Context
 			ri.opened_at,
 			ri.decision,
 			ri.decided_at,
-			ri.submitted_at
+			ri.submitted_at,
+			ri.delivered_at,
+			ri.in_progress_at,
+			ri.superseded_at,
+			r.confidentiality_mode, r.organization, r.role, r.country_code, r.application_type,
+			r.submission_method, r.preferred_completion_at, r.timezone, r.candidate_context,
+			r.why_applying, r.relationship_context, r.traits, r.achievements
 		FROM referee_invitations ri
 		INNER JOIN reference_requests r ON r.id = ri.reference_request_id
 		INNER JOIN users u ON u.id = r.candidate_user_id
@@ -257,6 +300,22 @@ func (s *ReferenceRequestStore) GetRefereeRequestByTokenHash(ctx context.Context
 		&view.Decision,
 		&view.DecidedAt,
 		&view.SubmittedAt,
+		&view.DeliveredAt,
+		&view.InProgressAt,
+		&view.SupersededAt,
+		&view.ConfidentialityMode,
+		&view.Organization,
+		&view.Role,
+		&view.CountryCode,
+		&view.ApplicationType,
+		&view.SubmissionMethod,
+		&view.PreferredCompletionAt,
+		&view.Timezone,
+		&view.CandidateContext,
+		&view.WhyApplying,
+		&view.RelationshipContext,
+		&view.Traits,
+		&view.Achievements,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrRefereeInvitationNotFound
@@ -289,10 +348,11 @@ func (s *ReferenceRequestStore) MarkRefereeInvitationOpened(ctx context.Context,
 		ctx,
 		`UPDATE reference_requests
 		 SET opened_at = COALESCE(opened_at, NOW()),
-		     status = CASE WHEN status = 'sent' THEN 'opened' ELSE status END,
+		     status = CASE WHEN status IN ('sent', 'delivered') THEN 'opened' ELSE status END,
 		     updated_at = NOW()
-		 WHERE id = $1`,
+		 WHERE id = $1 AND active_invitation_id = $2`,
 		requestID,
+		invitationID,
 	)
 	if err != nil {
 		return err
@@ -395,7 +455,7 @@ func (s *ReferenceRequestStore) SubmitReferenceByTokenHash(ctx context.Context, 
 	invitation := RefereeRequestView{}
 	err = tx.QueryRow(
 		ctx,
-		`SELECT ri.id, r.id, r.candidate_user_id, u.full_name, u.email, r.referee_name, r.referee_email, r.referee_relationship, r.institution_name, r.programme_name, r.opportunity_type, r.deadline_at, r.instructions, r.status, ri.expires_at, ri.revoked_at, ri.opened_at, ri.decision, ri.decided_at, ri.submitted_at
+		`SELECT ri.id, r.id, r.candidate_user_id, u.full_name, u.email, ri.referee_name, ri.referee_email, ri.referee_relationship, r.institution_name, r.programme_name, r.opportunity_type, r.deadline_at, r.instructions, r.status, ri.expires_at, ri.revoked_at, ri.opened_at, ri.decision, ri.decided_at, ri.submitted_at, ri.delivered_at, ri.in_progress_at, ri.superseded_at, r.confidentiality_mode, r.organization, r.role, r.country_code, r.application_type, r.submission_method, r.preferred_completion_at, r.timezone, r.candidate_context, r.why_applying, r.relationship_context, r.traits, r.achievements
 		 FROM referee_invitations ri
 		 INNER JOIN reference_requests r ON r.id = ri.reference_request_id
 		 INNER JOIN users u ON u.id = r.candidate_user_id
@@ -423,6 +483,22 @@ func (s *ReferenceRequestStore) SubmitReferenceByTokenHash(ctx context.Context, 
 		&invitation.Decision,
 		&invitation.DecidedAt,
 		&invitation.SubmittedAt,
+		&invitation.DeliveredAt,
+		&invitation.InProgressAt,
+		&invitation.SupersededAt,
+		&invitation.ConfidentialityMode,
+		&invitation.Organization,
+		&invitation.Role,
+		&invitation.CountryCode,
+		&invitation.ApplicationType,
+		&invitation.SubmissionMethod,
+		&invitation.PreferredCompletionAt,
+		&invitation.Timezone,
+		&invitation.CandidateContext,
+		&invitation.WhyApplying,
+		&invitation.RelationshipContext,
+		&invitation.Traits,
+		&invitation.Achievements,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrRefereeInvitationNotFound
@@ -491,8 +567,9 @@ func (s *ReferenceRequestStore) SubmitReferenceByTokenHash(ctx context.Context, 
 		ctx,
 		`UPDATE reference_requests
 		 SET submitted_at = NOW(), status = 'submitted', updated_at = NOW(), opened_at = COALESCE(opened_at, NOW())
-		 WHERE id = $1`,
+		 WHERE id = $1 AND active_invitation_id = $2`,
 		invitation.ReferenceRequestID,
+		invitation.InvitationID,
 	)
 	if err != nil {
 		return nil, err
@@ -550,7 +627,7 @@ func (s *ReferenceRequestStore) DecideRefereeInvitationByTokenHash(ctx context.C
 	view := RefereeRequestView{}
 	err = tx.QueryRow(
 		ctx,
-		`SELECT ri.id, r.id, r.candidate_user_id, u.full_name, u.email, r.referee_name, r.referee_email, r.referee_relationship, r.institution_name, r.programme_name, r.opportunity_type, r.deadline_at, r.instructions, r.status, ri.expires_at, ri.revoked_at, ri.opened_at, ri.decision, ri.decided_at, ri.submitted_at
+		`SELECT ri.id, r.id, r.candidate_user_id, u.full_name, u.email, ri.referee_name, ri.referee_email, ri.referee_relationship, r.institution_name, r.programme_name, r.opportunity_type, r.deadline_at, r.instructions, r.status, ri.expires_at, ri.revoked_at, ri.opened_at, ri.decision, ri.decided_at, ri.submitted_at, ri.delivered_at, ri.in_progress_at, ri.superseded_at, r.confidentiality_mode, r.organization, r.role, r.country_code, r.application_type, r.submission_method, r.preferred_completion_at, r.timezone, r.candidate_context, r.why_applying, r.relationship_context, r.traits, r.achievements
 		 FROM referee_invitations ri
 		 INNER JOIN reference_requests r ON r.id = ri.reference_request_id
 		 INNER JOIN users u ON u.id = r.candidate_user_id
@@ -578,6 +655,22 @@ func (s *ReferenceRequestStore) DecideRefereeInvitationByTokenHash(ctx context.C
 		&view.Decision,
 		&view.DecidedAt,
 		&view.SubmittedAt,
+		&view.DeliveredAt,
+		&view.InProgressAt,
+		&view.SupersededAt,
+		&view.ConfidentialityMode,
+		&view.Organization,
+		&view.Role,
+		&view.CountryCode,
+		&view.ApplicationType,
+		&view.SubmissionMethod,
+		&view.PreferredCompletionAt,
+		&view.Timezone,
+		&view.CandidateContext,
+		&view.WhyApplying,
+		&view.RelationshipContext,
+		&view.Traits,
+		&view.Achievements,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrRefereeInvitationNotFound
@@ -641,9 +734,10 @@ func (s *ReferenceRequestStore) DecideRefereeInvitationByTokenHash(ctx context.C
 		ctx,
 		`UPDATE reference_requests
 		 SET status = $2, opened_at = COALESCE(opened_at, NOW()), updated_at = NOW()
-		 WHERE id = $1`,
+		 WHERE id = $1 AND active_invitation_id = $3`,
 		view.ReferenceRequestID,
 		status,
+		view.InvitationID,
 	)
 	if err != nil {
 		return nil, err

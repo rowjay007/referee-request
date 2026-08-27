@@ -1,5 +1,6 @@
 export type ReferenceRequest = {
   id: string;
+  activeInvitationId?: string | null;
   refereeName: string;
   refereeEmail: string;
   refereeRelationship: string;
@@ -8,11 +9,29 @@ export type ReferenceRequest = {
   opportunityType: string;
   deadlineAt: string;
   instructions: string;
+  confidentialityMode: "confidential" | "non_confidential";
+  organization: string;
+  role: string;
+  countryCode: string;
+  applicationType: string;
+  submissionMethod: string;
+  preferredCompletionAt: string | null;
+  timezone: string;
+  candidateContext: string;
+  whyApplying: string;
+  relationshipContext: string;
+  traits: string;
+  achievements: string;
+  outcome: "successful" | "unsuccessful" | "withdrawn" | "unknown" | null;
+  outcomeNote: string | null;
+  outcomeAt: string | null;
   status:
     | "draft"
     | "sent"
+    | "delivered"
     | "opened"
     | "accepted"
+    | "in_progress"
     | "declined"
     | "submitted"
     | "cancelled"
@@ -21,6 +40,32 @@ export type ReferenceRequest = {
   openedAt: string | null;
   submittedAt: string | null;
   createdAt: string;
+  updatedAt: string;
+};
+
+export type RefereeContact = {
+  id: string;
+  name: string;
+  email: string;
+  relationship: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RefereeInvitation = {
+  id: string;
+  refereeName: string;
+  refereeEmail: string;
+  refereeRelationship: string;
+  expiresAt: string;
+  deliveredAt: string | null;
+  openedAt: string | null;
+  decision: "accepted" | "declined" | null;
+  decidedAt: string | null;
+  inProgressAt: string | null;
+  submittedAt: string | null;
+  revokedAt: string | null;
+  supersededAt: string | null;
 };
 
 export type RequestStatusPresentation = {
@@ -39,7 +84,11 @@ export function statusMessage(request: ReferenceRequest) {
   }
 
   if (request.status === "accepted") {
-    return `${request.refereeName} accepted your request and has not submitted yet.`;
+    return `${request.refereeName} accepted your request and has not started the reference yet.`;
+  }
+
+  if (request.status === "in_progress") {
+    return `${request.refereeName} is working on your reference.`;
   }
 
   if (request.status === "declined") {
@@ -47,7 +96,11 @@ export function statusMessage(request: ReferenceRequest) {
   }
 
   if (request.status === "sent") {
-    return `${request.refereeName} has not opened your request yet.`;
+    return `Your invitation to ${request.refereeName} is queued for delivery.`;
+  }
+
+  if (request.status === "delivered") {
+    return `Your invitation was delivered to ${request.refereeName}.`;
   }
 
   if (request.status === "draft") {
@@ -87,7 +140,15 @@ export function statusPresentation(
   if (request.status === "accepted") {
     return {
       heading: `Accepted by ${request.refereeName}`,
-      detail: `${request.refereeName} accepted your request and has not submitted yet.`,
+      detail: `${request.refereeName} accepted your request and has not started the reference yet.`,
+      tone: "warning",
+    };
+  }
+
+  if (request.status === "in_progress") {
+    return {
+      heading: "Reference in progress",
+      detail: `${request.refereeName} has started working on your reference.`,
       tone: "warning",
     };
   }
@@ -102,7 +163,15 @@ export function statusPresentation(
 
   if (request.status === "sent") {
     return {
-      heading: `Waiting for ${request.refereeName}`,
+      heading: "Invitation queued",
+      detail: `Your invitation to ${request.refereeName} is being delivered.`,
+      tone: "warning",
+    };
+  }
+
+  if (request.status === "delivered") {
+    return {
+      heading: "Invitation delivered",
       detail: `${request.refereeName} has not opened your request yet.`,
       tone: "warning",
     };

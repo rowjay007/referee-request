@@ -38,14 +38,23 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 
 	userStore := store.NewUserStore(db)
 	requestStore := store.NewReferenceRequestStore(db)
-	documentStorage := storage.NewLocalStore(cfg.StorageLocalRoot)
+	documentStorage, err := storage.New(storage.Config{
+		Provider:       cfg.StorageProvider,
+		LocalRoot:      cfg.StorageLocalRoot,
+		SupabaseURL:    cfg.SupabaseURL,
+		SupabaseBucket: cfg.StorageSupabaseBucket,
+		ServiceRoleKey: cfg.SupabaseServiceRoleKey,
+	}, http.DefaultClient)
+	if err != nil {
+		return nil, err
+	}
 	notificationSender := notification.NewResendSender(cfg.ResendAPIKey)
 	notificationService, err := notification.NewService(logger, requestStore, notificationSender, cfg.ResendFromEmail)
 	if err != nil {
 		return nil, err
 	}
 	authHandler := handlers.NewAuthHandler(cfg, userStore)
-	requestHandler := handlers.NewReferenceRequestHandler(cfg, requestStore)
+	requestHandler := handlers.NewReferenceRequestHandler(cfg, requestStore, documentStorage)
 	documentHandler := handlers.NewDocumentHandler(cfg, requestStore, documentStorage)
 	refereeHandler := handlers.NewRefereeHandler(cfg, requestStore, documentStorage)
 	notificationHandler := handlers.NewNotificationHandler(cfg, notificationService)
@@ -73,19 +82,35 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 			requestRouter.Get("/", requestHandler.List)
 			requestRouter.Post("/", requestHandler.Create)
 			requestRouter.Get("/{requestId}", requestHandler.Get)
+			requestRouter.Patch("/{requestId}", requestHandler.Patch)
 			requestRouter.Get("/{requestId}/events", requestHandler.Events)
+			requestRouter.Get("/{requestId}/invitations", requestHandler.Invitations)
 			requestRouter.Get("/{requestId}/readiness", requestHandler.Readiness)
 			requestRouter.Post("/{requestId}/send", requestHandler.Send)
 			requestRouter.Post("/{requestId}/reminder", requestHandler.Reminder)
 			requestRouter.Post("/{requestId}/thank-you", requestHandler.ThankYou)
+			requestRouter.Post("/{requestId}/replace-referee", requestHandler.Replace)
+			requestRouter.Post("/{requestId}/repeat", requestHandler.Repeat)
+			requestRouter.Put("/{requestId}/outcome", requestHandler.Outcome)
+			requestRouter.Get("/{requestId}/submitted-reference", requestHandler.DownloadSubmittedReference)
 			requestRouter.Get("/{requestId}/documents", documentHandler.List)
 			requestRouter.Post("/{requestId}/documents", documentHandler.Upload)
+		})
+
+		r.Route("/referee-contacts", func(contactRouter chi.Router) {
+			contactRouter.Use(authmiddleware.RequireCandidateAuth(cfg.JWTSecret))
+			contactRouter.Use(httprate.LimitByIP(60, time.Minute))
+			contactRouter.Get("/", requestHandler.ListContacts)
+			contactRouter.Post("/", requestHandler.CreateContact)
+			contactRouter.Put("/{contactId}", requestHandler.UpdateContact)
+			contactRouter.Delete("/{contactId}", requestHandler.DeleteContact)
 		})
 
 		r.Route("/referee", func(refereeRouter chi.Router) {
 			refereeRouter.Use(httprate.LimitByIP(30, time.Minute))
 			refereeRouter.Get("/{token}", refereeHandler.GetRequest)
 			refereeRouter.Post("/{token}/decision", refereeHandler.Decide)
+			refereeRouter.Post("/{token}/in-progress", refereeHandler.InProgress)
 			refereeRouter.Get("/{token}/documents/{documentId}", refereeHandler.DownloadDocument)
 			refereeRouter.Post("/{token}/submit", refereeHandler.SubmitReference)
 		})
@@ -94,6 +119,7 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 			notificationRouter.Use(httprate.LimitByIP(20, time.Minute))
 			notificationRouter.Post("/dispatch", notificationHandler.Dispatch)
 			notificationRouter.Post("/reminders", notificationHandler.QueueReminders)
+			notificationRouter.Post("/delivery/{providerMessageId}", notificationHandler.Delivery)
 		})
 	})
 

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
-import { getAuthToken } from "@/lib/auth";
+import { useAuthToken } from "@/lib/auth";
 import {
   ReferenceRequest,
   deadlineLabel,
@@ -17,7 +17,7 @@ type ListResponse = {
 };
 
 export default function RequestsDashboardPage() {
-  const token = typeof window === "undefined" ? null : getAuthToken();
+  const token = useAuthToken();
   const [requests, setRequests] = useState<ReferenceRequest[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(Boolean(token));
@@ -90,12 +90,18 @@ export default function RequestsDashboardPage() {
         </p>
       ) : null}
       {error ? (
-        <p className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error">
+        <p
+          role="alert"
+          className="rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error"
+        >
           {error}
         </p>
       ) : null}
       {actionMessage ? (
-        <p className="rounded-lg border border-success/20 bg-green-50 px-4 py-3 text-sm text-success">
+        <p
+          aria-live="polite"
+          className="rounded-lg border border-success/20 bg-green-50 px-4 py-3 text-sm text-success"
+        >
           {actionMessage}
         </p>
       ) : null}
@@ -167,8 +173,10 @@ export default function RequestsDashboardPage() {
                   </Link>
                 </Button>
                 {request.status === "sent" ||
+                request.status === "delivered" ||
                 request.status === "opened" ||
-                request.status === "accepted" ? (
+                request.status === "accepted" ||
+                request.status === "in_progress" ? (
                   <Button
                     type="button"
                     variant="secondary"
@@ -182,8 +190,15 @@ export default function RequestsDashboardPage() {
                 ) : null}
                 {request.status === "declined" ? (
                   <Button asChild>
-                    <Link href="/dashboard/requests/new">
-                      Choose another referee
+                    <Link href={`/dashboard/requests/${request.id}`}>
+                      Replace referee
+                    </Link>
+                  </Button>
+                ) : null}
+                {request.status === "draft" ? (
+                  <Button asChild>
+                    <Link href={`/dashboard/requests/${request.id}`}>
+                      Edit draft
                     </Link>
                   </Button>
                 ) : null}

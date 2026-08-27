@@ -6,11 +6,11 @@
   --text: #181426;
   --muted: #6e6486;
   --border: #e8dfd2;
-  --primary: #dc6243;
+  --primary: #b74328;
   --secondary: #3c2770;
   --tertiary: #181426;
   --error: #dc2626;
-  --success: #15803d;
+  --success: #116b35;
 }
 
 @theme inline {

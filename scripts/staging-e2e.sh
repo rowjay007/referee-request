@@ -32,7 +32,7 @@ curl --fail --silent --show-error \
   -X POST "${API_BASE_URL}/requests" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${candidate_token}" \
-  -d "{\"refereeName\":\"Dr Referee ${RUN_ID}\",\"refereeEmail\":\"${REFEREE_EMAIL}\",\"refereeRelationship\":\"Supervisor\",\"institutionName\":\"University of Lagos\",\"programmeName\":\"MSc Computer Science\",\"opportunityType\":\"university\",\"deadlineAt\":\"${deadline_at}\",\"instructions\":\"Please evaluate leadership, communication, and technical depth.\"}" \
+  -d "{\"refereeName\":\"Dr Referee ${RUN_ID}\",\"refereeEmail\":\"${REFEREE_EMAIL}\",\"refereeRelationship\":\"Supervisor\",\"organization\":\"University of Lagos\",\"role\":\"MSc Computer Science\",\"countryCode\":\"NG\",\"applicationType\":\"university\",\"submissionMethod\":\"portal\",\"preferredCompletionAt\":\"${deadline_at}\",\"timezone\":\"Africa/Lagos\",\"candidateContext\":\"Please evaluate leadership, communication, and technical depth.\",\"whyApplying\":\"Advanced study\",\"relationshipContext\":\"Research supervisor\",\"traits\":\"Leadership and communication\",\"achievements\":\"Technical delivery\",\"confidentialityMode\":\"non_confidential\"}" \
   > "$request_json"
 request_id="$(jq -r '.data.request.id' "$request_json")"
 
@@ -68,7 +68,15 @@ if [ -n "$download_path" ]; then
   fi
 fi
 
-echo "6) Referee submits reference"
+echo "6) Referee accepts and starts reference"
+curl --fail --silent --show-error \
+  -X POST "${API_BASE_URL}/referee/${referee_token}/decision" \
+  -H "Content-Type: application/json" \
+  -d '{"decision":"accepted"}' > /dev/null
+curl --fail --silent --show-error \
+  -X POST "${API_BASE_URL}/referee/${referee_token}/in-progress" > /dev/null
+
+echo "7) Referee submits reference"
 reference_file="$tmpdir/reference.txt"
 echo "Reference submission for request ${request_id}" > "$reference_file"
 curl --fail --silent --show-error \
@@ -76,7 +84,7 @@ curl --fail --silent --show-error \
   -F "referenceFile=@${reference_file};type=text/plain" \
   > "$tmpdir/submission.json"
 
-echo "7) Candidate request status check"
+echo "8) Candidate request status and download check"
 status_json="$tmpdir/status.json"
 curl --fail --silent --show-error \
   "${API_BASE_URL}/requests/${request_id}" \
@@ -87,6 +95,20 @@ if [ "$status_value" != "submitted" ]; then
   echo "Expected submitted status, got: ${status_value}"
   exit 1
 fi
+
+curl --fail --silent --show-error \
+  "${API_BASE_URL}/requests/${request_id}/submitted-reference" \
+  -H "Authorization: Bearer ${candidate_token}" > /dev/null
+
+curl --fail --silent --show-error \
+  -X PUT "${API_BASE_URL}/requests/${request_id}/outcome" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${candidate_token}" \
+  -d '{"outcome":"successful","note":"staging e2e"}' > /dev/null
+
+curl --fail --silent --show-error \
+  "${API_BASE_URL}/referee-contacts" \
+  -H "Authorization: Bearer ${candidate_token}" > /dev/null
 
 if [ -n "$DISPATCH_TOKEN" ]; then
   echo "8) Trigger reminder queue + dispatch"

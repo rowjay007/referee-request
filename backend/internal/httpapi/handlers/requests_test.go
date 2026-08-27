@@ -149,3 +149,57 @@ func TestEvaluateRequestReadiness(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateCreateReferenceRequestGlobalFields(t *testing.T) {
+	base := createReferenceRequestPayload{
+		RefereeName:         "Dr. Maya Chen",
+		RefereeEmail:        "maya@example.com",
+		RefereeRelationship: "Professor",
+		InstitutionName:     "Northbridge University",
+		ProgrammeName:       "MSc Computer Science",
+		OpportunityType:     "academic",
+		DeadlineAt:          "2027-01-30T12:00:00Z",
+		ConfidentialityMode: "confidential",
+		CountryCode:         "GB",
+		Timezone:            "Europe/London",
+	}
+
+	tests := []struct {
+		name      string
+		mutate    func(*createReferenceRequestPayload)
+		wantField string
+	}{
+		{
+			name: "invalid confidentiality mode",
+			mutate: func(payload *createReferenceRequestPayload) {
+				payload.ConfidentialityMode = "private"
+			},
+			wantField: "confidentialityMode",
+		},
+		{
+			name: "invalid country code",
+			mutate: func(payload *createReferenceRequestPayload) {
+				payload.CountryCode = "GBR"
+			},
+			wantField: "countryCode",
+		},
+		{
+			name: "invalid timezone",
+			mutate: func(payload *createReferenceRequestPayload) {
+				payload.Timezone = "London"
+			},
+			wantField: "timezone",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			payload := base
+			test.mutate(&payload)
+			details := validateCreateReferenceRequest(payload)
+			if _, ok := details[test.wantField]; !ok {
+				t.Fatalf("validation details = %v, want field %q", details, test.wantField)
+			}
+		})
+	}
+}

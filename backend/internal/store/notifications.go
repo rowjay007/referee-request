@@ -156,10 +156,11 @@ func (s *ReferenceRequestStore) QueueDeadlineReminders(ctx context.Context, lead
 		ctx,
 		`
 		INSERT INTO notification_outbox (
-		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
+		    reference_request_id, referee_invitation_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
 		)
 		SELECT
 		    r.id,
+		    ri.id,
 		    'deadline_reminder',
 		    'email',
 		    r.referee_email,
@@ -183,8 +184,8 @@ func (s *ReferenceRequestStore) QueueDeadlineReminders(ctx context.Context, lead
 		    NOW()
 		FROM reference_requests r
 		INNER JOIN users u ON u.id = r.candidate_user_id
-		INNER JOIN referee_invitations ri ON ri.reference_request_id = r.id
-		WHERE r.status IN ('sent', 'opened')
+		INNER JOIN referee_invitations ri ON ri.id = r.active_invitation_id
+		WHERE r.status IN ('sent', 'delivered', 'opened', 'accepted', 'in_progress')
 		  AND r.deadline_at > NOW()
 		  AND r.deadline_at <= NOW() + make_interval(hours => $1::int)
 		  AND ri.expires_at > NOW()
@@ -211,10 +212,11 @@ func (s *ReferenceRequestStore) QueueManualReminderForCandidate(ctx context.Cont
 		`
 		WITH queued_notification AS (
 			INSERT INTO notification_outbox (
-		    reference_request_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
+		    reference_request_id, referee_invitation_id, notification_type, channel, recipient_email, recipient_name, subject, html_body, status, attempt_count, max_attempts, available_at
 			)
 			SELECT
 		    r.id,
+		    ri.id,
 		    'manual_reminder',
 		    'email',
 		    r.referee_email,
@@ -237,10 +239,10 @@ func (s *ReferenceRequestStore) QueueManualReminderForCandidate(ctx context.Cont
 		    NOW()
 			FROM reference_requests r
 			INNER JOIN users u ON u.id = r.candidate_user_id
-			INNER JOIN referee_invitations ri ON ri.reference_request_id = r.id
+			INNER JOIN referee_invitations ri ON ri.id = r.active_invitation_id
 			WHERE r.id = $1
 			  AND r.candidate_user_id = $2
-			  AND r.status IN ('sent', 'opened', 'accepted')
+			  AND r.status IN ('sent', 'delivered', 'opened', 'accepted', 'in_progress')
 			  AND r.deadline_at > NOW()
 			  AND ri.expires_at > NOW()
 			  AND ri.revoked_at IS NULL
@@ -281,7 +283,7 @@ func (s *ReferenceRequestStore) QueueManualReminderForCandidate(ctx context.Cont
 		return err
 	}
 
-	if status != "sent" && status != "opened" && status != "accepted" {
+	if status != "sent" && status != "delivered" && status != "opened" && status != "accepted" && status != "in_progress" {
 		return ErrReferenceRequestReminderNotAllowed
 	}
 

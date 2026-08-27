@@ -18,34 +18,64 @@ var ErrReferenceRequestThankYouNotAllowed = errors.New("reference request thank 
 var ErrReferenceRequestThankYouCooldown = errors.New("reference request thank you cooldown")
 
 type ReferenceRequest struct {
-	ID                  uuid.UUID
-	CandidateUserID     uuid.UUID
-	RefereeName         string
-	RefereeEmail        string
-	RefereeRelationship string
-	InstitutionName     string
-	ProgrammeName       string
-	OpportunityType     string
-	DeadlineAt          time.Time
-	Instructions        string
-	Status              string
-	SentAt              *time.Time
-	OpenedAt            *time.Time
-	SubmittedAt         *time.Time
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	ID                    uuid.UUID
+	CandidateUserID       uuid.UUID
+	ActiveInvitationID    *uuid.UUID
+	RefereeName           string
+	RefereeEmail          string
+	RefereeRelationship   string
+	InstitutionName       string
+	ProgrammeName         string
+	OpportunityType       string
+	DeadlineAt            time.Time
+	Instructions          string
+	ConfidentialityMode   string
+	Organization          string
+	Role                  string
+	CountryCode           string
+	ApplicationType       string
+	SubmissionMethod      string
+	PreferredCompletionAt *time.Time
+	Timezone              string
+	CandidateContext      string
+	WhyApplying           string
+	RelationshipContext   string
+	Traits                string
+	Achievements          string
+	Outcome               *string
+	OutcomeNote           *string
+	OutcomeAt             *time.Time
+	Status                string
+	SentAt                *time.Time
+	OpenedAt              *time.Time
+	SubmittedAt           *time.Time
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
 }
 
 type CreateReferenceRequestInput struct {
-	CandidateUserID     uuid.UUID
-	RefereeName         string
-	RefereeEmail        string
-	RefereeRelationship string
-	InstitutionName     string
-	ProgrammeName       string
-	OpportunityType     string
-	DeadlineAt          time.Time
-	Instructions        string
+	CandidateUserID       uuid.UUID
+	RefereeName           string
+	RefereeEmail          string
+	RefereeRelationship   string
+	InstitutionName       string
+	ProgrammeName         string
+	OpportunityType       string
+	DeadlineAt            time.Time
+	Instructions          string
+	ConfidentialityMode   string
+	Organization          string
+	Role                  string
+	CountryCode           string
+	ApplicationType       string
+	SubmissionMethod      string
+	PreferredCompletionAt *time.Time
+	Timezone              string
+	CandidateContext      string
+	WhyApplying           string
+	RelationshipContext   string
+	Traits                string
+	Achievements          string
 }
 
 type SupportingDocument struct {
@@ -90,15 +120,23 @@ func NewReferenceRequestStore(db *pgxpool.Pool) *ReferenceRequestStore {
 }
 
 func (s *ReferenceRequestStore) CreateReferenceRequest(ctx context.Context, input CreateReferenceRequestInput) (*ReferenceRequest, error) {
+	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
 	const query = `
 		INSERT INTO reference_requests (
 			candidate_user_id, referee_name, referee_email, referee_relationship,
-			institution_name, programme_name, opportunity_type, deadline_at, instructions, status
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'draft')
-		RETURNING id, candidate_user_id, referee_name, referee_email, referee_relationship, institution_name, programme_name, opportunity_type, deadline_at, instructions, status, sent_at, opened_at, submitted_at, created_at, updated_at
-	`
+			institution_name, programme_name, opportunity_type, deadline_at, instructions,
+			confidentiality_mode, organization, role, country_code, application_type,
+			submission_method, preferred_completion_at, timezone, candidate_context,
+			why_applying, relationship_context, traits, achievements, status
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,'draft')
+		RETURNING ` + referenceRequestColumns
 
-	row := s.db.QueryRow(
+	request, err := scanReferenceRequest(tx.QueryRow(
 		ctx,
 		query,
 		input.CandidateUserID,
@@ -110,13 +148,41 @@ func (s *ReferenceRequestStore) CreateReferenceRequest(ctx context.Context, inpu
 		input.OpportunityType,
 		input.DeadlineAt,
 		input.Instructions,
-	)
-	return scanReferenceRequest(row)
+		input.ConfidentialityMode,
+		input.Organization,
+		input.Role,
+		input.CountryCode,
+		input.ApplicationType,
+		input.SubmissionMethod,
+		input.PreferredCompletionAt,
+		input.Timezone,
+		input.CandidateContext,
+		input.WhyApplying,
+		input.RelationshipContext,
+		input.Traits,
+		input.Achievements,
+	))
+	if err != nil {
+		return nil, err
+	}
+	_, err = tx.Exec(ctx, `
+		INSERT INTO referee_contacts (candidate_user_id, name, email, relationship)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (candidate_user_id, email) DO UPDATE
+		SET name = EXCLUDED.name, relationship = EXCLUDED.relationship, updated_at = NOW()`,
+		input.CandidateUserID, input.RefereeName, input.RefereeEmail, input.RefereeRelationship)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return request, nil
 }
 
 func (s *ReferenceRequestStore) ListReferenceRequestsByCandidate(ctx context.Context, candidateUserID uuid.UUID) ([]ReferenceRequest, error) {
 	const query = `
-		SELECT id, candidate_user_id, referee_name, referee_email, referee_relationship, institution_name, programme_name, opportunity_type, deadline_at, instructions, status, sent_at, opened_at, submitted_at, created_at, updated_at
+		SELECT ` + referenceRequestColumns + `
 		FROM reference_requests
 		WHERE candidate_user_id = $1
 		ORDER BY created_at DESC
@@ -145,7 +211,7 @@ func (s *ReferenceRequestStore) ListReferenceRequestsByCandidate(ctx context.Con
 
 func (s *ReferenceRequestStore) GetReferenceRequestByIDForCandidate(ctx context.Context, id, candidateUserID uuid.UUID) (*ReferenceRequest, error) {
 	const query = `
-		SELECT id, candidate_user_id, referee_name, referee_email, referee_relationship, institution_name, programme_name, opportunity_type, deadline_at, instructions, status, sent_at, opened_at, submitted_at, created_at, updated_at
+		SELECT ` + referenceRequestColumns + `
 		FROM reference_requests
 		WHERE id = $1 AND candidate_user_id = $2
 		LIMIT 1
@@ -166,7 +232,7 @@ func (s *ReferenceRequestStore) MarkReferenceRequestSent(ctx context.Context, id
 		UPDATE reference_requests
 		SET status = 'sent', sent_at = NOW(), updated_at = NOW()
 		WHERE id = $1 AND candidate_user_id = $2 AND status = 'draft'
-		RETURNING id, candidate_user_id, referee_name, referee_email, referee_relationship, institution_name, programme_name, opportunity_type, deadline_at, instructions, status, sent_at, opened_at, submitted_at, created_at, updated_at
+		RETURNING ` + referenceRequestColumns + `
 	`
 	request, err := scanReferenceRequest(s.db.QueryRow(ctx, query, id, candidateUserID))
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -317,11 +383,20 @@ type referenceRequestScanner interface {
 	Scan(dest ...any) error
 }
 
+const referenceRequestColumns = `id, candidate_user_id, active_invitation_id,
+	referee_name, referee_email, referee_relationship,
+	institution_name, programme_name, opportunity_type, deadline_at, instructions,
+	confidentiality_mode, organization, role, country_code, application_type,
+	submission_method, preferred_completion_at, timezone, candidate_context,
+	why_applying, relationship_context, traits, achievements,
+	outcome, outcome_note, outcome_at, status, sent_at, opened_at, submitted_at, created_at, updated_at`
+
 func scanReferenceRequest(scanner referenceRequestScanner) (*ReferenceRequest, error) {
 	request := &ReferenceRequest{}
 	err := scanner.Scan(
 		&request.ID,
 		&request.CandidateUserID,
+		&request.ActiveInvitationID,
 		&request.RefereeName,
 		&request.RefereeEmail,
 		&request.RefereeRelationship,
@@ -330,6 +405,22 @@ func scanReferenceRequest(scanner referenceRequestScanner) (*ReferenceRequest, e
 		&request.OpportunityType,
 		&request.DeadlineAt,
 		&request.Instructions,
+		&request.ConfidentialityMode,
+		&request.Organization,
+		&request.Role,
+		&request.CountryCode,
+		&request.ApplicationType,
+		&request.SubmissionMethod,
+		&request.PreferredCompletionAt,
+		&request.Timezone,
+		&request.CandidateContext,
+		&request.WhyApplying,
+		&request.RelationshipContext,
+		&request.Traits,
+		&request.Achievements,
+		&request.Outcome,
+		&request.OutcomeNote,
+		&request.OutcomeAt,
 		&request.Status,
 		&request.SentAt,
 		&request.OpenedAt,
