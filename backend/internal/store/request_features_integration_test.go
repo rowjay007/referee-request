@@ -95,4 +95,34 @@ func TestRequestFeatureLifecycle(t *testing.T) {
 	if _, err := s.ListInvitationsForCandidate(ctx, request.ID, otherID); err != nil {
 		t.Fatalf("cross-owner history query: %v", err)
 	}
+
+	var notificationID uuid.UUID
+	err = pool.QueryRow(ctx, `SELECT id FROM notification_outbox
+		WHERE referee_invitation_id=$1 AND notification_type='invitation_email'`, secondInvitation.ID).Scan(&notificationID)
+	if err != nil {
+		t.Fatalf("find invitation notification: %v", err)
+	}
+	if err := s.MarkNotificationSent(ctx, notificationID, "provider-message-two"); err != nil {
+		t.Fatalf("mark notification sent: %v", err)
+	}
+	for attempt := 0; attempt < 2; attempt++ {
+		if err := s.MarkInvitationDeliveredByProviderID(ctx, "provider-message-two"); err != nil {
+			t.Fatalf("mark invitation delivered attempt %d: %v", attempt+1, err)
+		}
+	}
+	request, err = s.GetReferenceRequestByIDForCandidate(ctx, request.ID, candidateID)
+	if err != nil || request.Status != "delivered" {
+		t.Fatalf("delivered request = %#v, %v", request, err)
+	}
+
+	view, err := s.DecideRefereeInvitationByTokenHash(ctx, RefereeDecisionInput{TokenHash: "token-two", Decision: "accepted"})
+	if err != nil || view.Status != "accepted" {
+		t.Fatalf("accepted invitation = %#v, %v", view, err)
+	}
+	for attempt := 0; attempt < 2; attempt++ {
+		view, err = s.MarkRefereeInProgress(ctx, "token-two")
+		if err != nil || view.Status != "in_progress" || view.InProgressAt == nil {
+			t.Fatalf("in-progress attempt %d = %#v, %v", attempt+1, view, err)
+		}
+	}
 }
