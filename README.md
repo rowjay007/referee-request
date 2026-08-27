@@ -57,6 +57,7 @@ go run ./cmd/api
 
 ```bash
 cd frontend && npm run lint && npm run build
+cd frontend && npm run test:e2e
 cd backend && go test ./...
 ```
 

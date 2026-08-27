@@ -25,6 +25,19 @@ type RefereeRequestData = {
   opportunityType: string;
   deadlineAt: string;
   instructions: string;
+  confidentialityMode: "confidential" | "non_confidential";
+  organization: string;
+  role: string;
+  countryCode: string;
+  applicationType: string;
+  submissionMethod: string;
+  preferredCompletionAt: string | null;
+  timezone: string;
+  candidateContext: string;
+  whyApplying: string;
+  relationshipContext: string;
+  traits: string;
+  achievements: string;
   status: string;
   decision: "accepted" | "declined" | null;
   decidedAt: string | null;
@@ -62,6 +75,7 @@ export default function RefereePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deciding, setDeciding] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -183,6 +197,29 @@ export default function RefereePage() {
     }
   }
 
+  async function startReference() {
+    if (!token || !request) return;
+    setStarting(true);
+    setError("");
+    setMessage("");
+    try {
+      await apiRequest(`/referee/${token}/in-progress`, { method: "POST" });
+      setRequest((current) =>
+        current ? { ...current, status: "in_progress" } : current,
+      );
+      setMessage(
+        "Reference started. You can now upload your completed reference.",
+      );
+      posthog.capture("reference_started");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not start the reference.",
+      );
+    } finally {
+      setStarting(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 px-6 py-10 sm:px-10">
@@ -235,13 +272,52 @@ export default function RefereePage() {
         <InfoItem label="Programme or role" value={request.programmeName} />
         <InfoItem label="Opportunity type" value={request.opportunityType} />
         <InfoItem label="Relationship" value={request.refereeRelationship} />
+        <InfoItem
+          label="Submission method"
+          value={request.submissionMethod || "Not specified"}
+        />
+        <InfoItem
+          label="Country"
+          value={request.countryCode || "Not specified"}
+        />
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-5">
+        <h2 className="text-sm font-semibold text-foreground">
+          Confidentiality
+        </h2>
+        <p className="mt-2 text-sm text-muted">
+          {request.confidentialityMode === "confidential"
+            ? "This is a confidential reference. The candidate cannot download your submission."
+            : "This reference is non-confidential. The candidate can download your submission after you submit it."}
+        </p>
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="text-sm font-semibold text-foreground">Instructions</h2>
         <p className="mt-2 whitespace-pre-wrap text-sm text-muted">
-          {request.instructions || "No additional instructions provided."}
+          {request.candidateContext ||
+            request.instructions ||
+            "No additional context provided."}
         </p>
+        {request.whyApplying ? (
+          <p className="mt-3 whitespace-pre-wrap text-sm text-muted">
+            <strong className="text-foreground">Why they are applying:</strong>{" "}
+            {request.whyApplying}
+          </p>
+        ) : null}
+        {request.traits ? (
+          <p className="mt-3 whitespace-pre-wrap text-sm text-muted">
+            <strong className="text-foreground">Traits to highlight:</strong>{" "}
+            {request.traits}
+          </p>
+        ) : null}
+        {request.achievements ? (
+          <p className="mt-3 whitespace-pre-wrap text-sm text-muted">
+            <strong className="text-foreground">Achievements:</strong>{" "}
+            {request.achievements}
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-5">
@@ -326,15 +402,30 @@ export default function RefereePage() {
             Please accept this request first. Upload is available only after
             acceptance.
           </p>
+        ) : request.status !== "in_progress" ? (
+          <div className="mt-3 space-y-3">
+            <p className="text-sm text-muted">
+              Confirm when you are ready to begin. Upload becomes available
+              after this step.
+            </p>
+            <Button type="button" disabled={starting} onClick={startReference}>
+              {starting ? "Starting..." : "Start reference"}
+            </Button>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-3 space-y-3">
-            <input
-              type="file"
-              required
-              accept=".pdf,.doc,.docx,.txt"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              className="w-full rounded-md border border-border px-3 py-2"
-            />
+            <label className="block space-y-1">
+              <span className="text-sm text-foreground">
+                Completed reference file
+              </span>
+              <input
+                type="file"
+                required
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                className="w-full rounded-md border border-border px-3 py-2"
+              />
+            </label>
             <Button disabled={submitting}>
               {submitting ? "Submitting..." : "Submit reference"}
             </Button>
@@ -342,8 +433,16 @@ export default function RefereePage() {
         )}
       </section>
 
-      {message ? <p className="text-sm text-success">{message}</p> : null}
-      {error ? <p className="text-sm text-error">{error}</p> : null}
+      {message ? (
+        <p aria-live="polite" className="text-sm text-success">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p role="alert" className="text-sm text-error">
+          {error}
+        </p>
+      ) : null}
     </main>
   );
 }

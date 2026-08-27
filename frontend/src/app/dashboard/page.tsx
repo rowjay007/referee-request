@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
-import { getAuthToken } from "@/lib/auth";
+import { useAuthToken } from "@/lib/auth";
 import {
   ReferenceRequest,
   deadlineLabel,
@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 type ListResponse = { requests: ReferenceRequest[] };
 
 export default function DashboardHomePage() {
-  const token = typeof window === "undefined" ? null : getAuthToken();
+  const token = useAuthToken();
   const [requests, setRequests] = useState<ReferenceRequest[]>([]);
   const [loading, setLoading] = useState(Boolean(token));
   const [error, setError] = useState("");
@@ -65,9 +65,13 @@ export default function DashboardHomePage() {
     const total = requests.length;
     const waiting = requests.filter(
       (r) =>
-        r.status === "sent" || r.status === "opened" || r.status === "accepted",
+        r.status === "sent" ||
+        r.status === "delivered" ||
+        r.status === "opened",
     ).length;
-    const accepted = requests.filter((r) => r.status === "accepted").length;
+    const underway = requests.filter(
+      (r) => r.status === "accepted" || r.status === "in_progress",
+    ).length;
     const declined = requests.filter((r) => r.status === "declined").length;
     const completed = requests.filter((r) => r.status === "submitted").length;
 
@@ -81,16 +85,19 @@ export default function DashboardHomePage() {
 
     const attention =
       requests.find((r) => r.status === "declined") ??
+      requests.find((r) => r.status === "draft") ??
       requests.find((r) => r.status === "sent") ??
+      requests.find((r) => r.status === "delivered") ??
       requests.find((r) => r.status === "opened") ??
       requests.find((r) => r.status === "accepted") ??
+      requests.find((r) => r.status === "in_progress") ??
       null;
     const recent = [...requests].slice(0, 4);
 
     return {
       total,
       waiting,
-      accepted,
+      underway,
       declined,
       completed,
       dueSoon,
@@ -162,7 +169,7 @@ export default function DashboardHomePage() {
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryCard label="Total" value={summary.total} />
             <SummaryCard label="Waiting" value={summary.waiting} />
-            <SummaryCard label="Accepted" value={summary.accepted} />
+            <SummaryCard label="Underway" value={summary.underway} />
             <SummaryCard label="Completed" value={summary.completed} />
           </section>
 
@@ -202,8 +209,10 @@ export default function DashboardHomePage() {
                       </Link>
                     </Button>
                     {summary.attention.status === "sent" ||
+                    summary.attention.status === "delivered" ||
                     summary.attention.status === "opened" ||
-                    summary.attention.status === "accepted" ? (
+                    summary.attention.status === "accepted" ||
+                    summary.attention.status === "in_progress" ? (
                       <Button
                         type="button"
                         variant="secondary"
@@ -217,8 +226,19 @@ export default function DashboardHomePage() {
                     ) : null}
                     {summary.attention.status === "declined" ? (
                       <Button asChild>
-                        <Link href="/dashboard/requests/new">
-                          Choose another referee
+                        <Link
+                          href={`/dashboard/requests/${summary.attention.id}`}
+                        >
+                          Replace referee
+                        </Link>
+                      </Button>
+                    ) : null}
+                    {summary.attention.status === "draft" ? (
+                      <Button asChild>
+                        <Link
+                          href={`/dashboard/requests/${summary.attention.id}`}
+                        >
+                          Edit draft
                         </Link>
                       </Button>
                     ) : null}
