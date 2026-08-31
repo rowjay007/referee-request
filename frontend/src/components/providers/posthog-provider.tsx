@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import posthog from "posthog-js";
-import { PostHogProvider as Provider } from "posthog-js/react";
 
 type Props = {
   children: React.ReactNode;
@@ -17,14 +15,19 @@ export function PostHogProvider({ children }: Props) {
       return;
     }
 
-    posthog.init(key, {
-      api_host: host,
-      capture_pageview: false,
-      capture_pageleave: true,
-      person_profiles: "identified_only",
-    });
-    posthog.capture("landing_page_viewed");
+    const timer = window.setTimeout(async () => {
+      const { default: posthog } = await import("posthog-js");
+      posthog.init(key, {
+        api_host: host,
+        capture_pageview: false,
+        capture_pageleave: true,
+        person_profiles: "identified_only",
+      });
+      posthog.capture("landing_page_viewed");
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
-  return <Provider client={posthog}>{children}</Provider>;
+  return children;
 }

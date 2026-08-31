@@ -1,0 +1,8 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "/^cd /Users/rowjay/DEV/referee-request && gh run list --commit b08233583a4b73aaea3e4a4ba0d817ff661cc478 --limit 10$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}
