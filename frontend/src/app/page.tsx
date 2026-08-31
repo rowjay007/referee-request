@@ -22,31 +22,33 @@ import Link from "next/link";
 export default function Home() {
   return (
     <main id="top" className="rr-home">
-      <header className="rr-site-header">
+      <header className="sticky top-0 z-30 flex h-16 items-center border-b border-[#d8d1c6] bg-[#f2eee4]/95 px-4 backdrop-blur-sm sm:px-6 lg:px-10">
         <Link
           href="/"
           aria-label="Go to RefereeRequest home"
-          className="rr-brand"
+          className="flex min-w-0 items-center gap-2.5 text-[#172126] no-underline"
         >
           <Image
             src="/referee-request-logo.svg"
             alt="RefereeRequest"
-            width={46}
-            height={46}
+            width={38}
+            height={38}
+            className="size-9 shrink-0 sm:size-10"
             priority
           />
         </Link>
 
-        <nav className="rr-main-nav" aria-label="Explore RefereeRequest">
-          <a href="#compose">Compose</a>
-          <a href="#handoff">Handoff</a>
-          <a href="#certainty">Certainty</a>
-          <a href="#reach">Reach</a>
-        </nav>
-
-        <nav className="rr-auth-actions" aria-label="Account navigation">
-          <HomeAction kind="account" variant="secondary" />
-          <HomeAction kind="request" label="Start a request" />
+        <nav
+          className="ml-auto flex items-center gap-2"
+          aria-label="Account navigation"
+        >
+          <HomeAction kind="account" variant="secondary" compactOnMobile />
+          <HomeAction
+            kind="request"
+            label="Start a request"
+            mobileLabel="Start"
+            className="px-3 sm:px-4"
+          />
         </nav>
       </header>
 
@@ -69,8 +71,23 @@ export default function Home() {
 
       <section id="compose" className="rr-story-slide rr-story-compose">
         <div className="rr-compose-copy">
+          <span className="rr-compose-index">01 / COMPOSE</span>
           <h2>A better ask starts complete.</h2>
           <p>Build the brief your referee wishes every candidate sent.</p>
+          <ol
+            className="rr-packet-index"
+            aria-label="Reference packet contents"
+          >
+            <li>
+              <span>01</span> Why you are asking
+            </li>
+            <li>
+              <span>02</span> What matters most
+            </li>
+            <li>
+              <span>03</span> When it is needed
+            </li>
+          </ol>
           <div className="rr-readiness-stamp">
             <BadgeCheck />
             <span>Ready to send</span>
@@ -90,7 +107,10 @@ export default function Home() {
             <span>Files</span>
           </div>
           <div className="rr-ready-sheet">
-            <span>REFERENCE PACKET</span>
+            <header>
+              <span>REFERENCE PACKET</span>
+              <b>3 / 3 COMPLETE</b>
+            </header>
             <dl>
               <div>
                 <dt>Purpose</dt>
@@ -112,6 +132,7 @@ export default function Home() {
             <p>
               <ShieldCheck /> Confidential request
             </p>
+            <span className="rr-packet-spine" />
           </div>
         </div>
       </section>
@@ -195,20 +216,30 @@ export default function Home() {
 
       <section id="certainty" className="rr-story-slide rr-story-certainty">
         <div className="rr-certainty-heading">
-          <p>REFERENCE IN PROGRESS</p>
+          <p>
+            <span aria-hidden="true" /> LIVE REFERENCE
+          </p>
           <h2>Moving forward.</h2>
+          <span className="rr-certainty-note">
+            You know what happened,
+            <br />
+            what is happening, and what comes next.
+          </span>
           <div className="rr-deadline-count">
-            <strong>6</strong>
-            <span>
-              days to
+            <div>
+              <strong>6</strong>
+              <span>days</span>
+            </div>
+            <p>
+              Plenty of time.
               <br />
-              deadline
-            </span>
+              <b>Due 14 Oct</b>
+            </p>
           </div>
         </div>
         <article className="rr-activity-receipt">
           <header>
-            <span>REQUEST ACTIVITY</span>
+            <span>RR / 04-218</span>
             <strong>
               <BadgeCheck /> On track
             </strong>
@@ -259,6 +290,7 @@ export default function Home() {
               <strong>Reminder available</strong>
               <span>Send when the timing is right</span>
             </div>
+            <span className="rr-reminder-action">Ready when you are</span>
           </footer>
         </article>
       </section>
@@ -331,6 +363,7 @@ export default function Home() {
             alt=""
             width={40}
             height={40}
+            className="size-9"
           />
         </Link>
         <p>© {new Date().getFullYear()}</p>
