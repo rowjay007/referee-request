@@ -1,16 +1,10 @@
 "use client";
 
+import type { JourneyMilestoneId } from "@/components/home/scene-model";
 import { useEffect, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { ReferenceRelay } from "@/components/home/reference-relay";
-import {
-  COORDINATION_SCENE,
-  type JourneyMilestoneId,
-} from "@/components/home/scene-model";
 
 type CoordinationSceneProps = {
-  activeStage: JourneyMilestoneId;
-  onStageChange: (stage: JourneyMilestoneId) => void;
+  initialStage?: JourneyMilestoneId;
 };
 
 const FLOW_MOMENTS = [
@@ -24,10 +18,10 @@ const FLOW_MOMENTS = [
 }[];
 
 export function CoordinationScene({
-  activeStage,
-  onStageChange,
+  initialStage = "packet_ready",
 }: CoordinationSceneProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [activeStage, setActiveStage] = useState(initialStage);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -52,27 +46,29 @@ export function CoordinationScene({
         (moment) => moment.id === activeStage,
       );
       const nextIndex = (Math.max(currentIndex, 0) + 1) % FLOW_MOMENTS.length;
-      onStageChange(FLOW_MOMENTS[nextIndex].id);
+      setActiveStage(FLOW_MOMENTS[nextIndex].id);
     }, 2200);
 
     return () => window.clearTimeout(timer);
-  }, [activeStage, onStageChange, reducedMotion]);
+  }, [activeStage, reducedMotion]);
 
   return (
     <>
-      <div className="rr-reference-relay-canvas" aria-hidden="true">
-        <Canvas
-          dpr={[1, 1.5]}
-          frameloop="demand"
-          gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-          camera={{ position: [0, 2.05, 6.5], fov: 31, near: 0.1, far: 30 }}
-        >
-          <ReferenceRelay
-            scene={COORDINATION_SCENE}
-            activeStage={activeStage}
-            reducedMotion={reducedMotion}
+      <div
+        className="rr-reference-relay-canvas"
+        data-stage={activeStage}
+        aria-hidden="true"
+      >
+        <span className="rr-relay-line" />
+        {Array.from({ length: 12 }, (_, index) => (
+          <span
+            key={index}
+            className="rr-relay-fragment"
+            style={{ "--fragment-index": index } as React.CSSProperties}
           />
-        </Canvas>
+        ))}
+        <span className="rr-relay-packet" />
+        <span className="rr-relay-complete" />
       </div>
 
       <ol className="rr-stage-rail" aria-label="Reference flow">
@@ -87,7 +83,7 @@ export function CoordinationScene({
                 aria-pressed={isActive}
                 aria-label={`${moment.label}: ${moment.detail}`}
                 data-active={isActive ? "true" : "false"}
-                onClick={() => onStageChange(moment.id)}
+                onClick={() => setActiveStage(moment.id)}
               >
                 <span>{moment.label}</span>
               </button>
