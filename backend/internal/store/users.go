@@ -27,6 +27,41 @@ type UserStore struct {
 	db *pgxpool.Pool
 }
 
+func (s *UserStore) DeleteUser(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	rows, err := s.db.Query(ctx, `
+		SELECT storage_key FROM supporting_documents WHERE candidate_user_id=$1
+		UNION ALL
+		SELECT sr.storage_key
+		FROM submitted_references sr
+		JOIN reference_requests rr ON rr.id=sr.reference_request_id
+		WHERE rr.candidate_user_id=$1`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	keys := make([]string, 0)
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	result, err := s.db.Exec(ctx, `DELETE FROM users WHERE id=$1`, userID)
+	if err != nil {
+		return nil, err
+	}
+	if result.RowsAffected() == 0 {
+		return nil, ErrUserNotFound
+	}
+	return keys, nil
+}
+
 func NewUserStore(db *pgxpool.Pool) *UserStore {
 	return &UserStore{db: db}
 }

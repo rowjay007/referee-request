@@ -1,3 +1,5 @@
+import { formatDate } from "@/lib/global-formatting";
+
 export type ReferenceRequest = {
   id: string;
   activeInvitationId?: string | null;
@@ -76,7 +78,7 @@ export type RequestStatusPresentation = {
 
 export function statusMessage(request: ReferenceRequest) {
   if (request.status === "submitted" && request.submittedAt) {
-    return `Reference submitted on ${new Date(request.submittedAt).toLocaleDateString()}.`;
+    return `Reference submitted on ${formatDate(request.submittedAt, request.timezone)}.`;
   }
 
   if (request.status === "opened") {
@@ -124,7 +126,7 @@ export function statusPresentation(
   if (request.status === "submitted" && request.submittedAt) {
     return {
       heading: "Reference submitted",
-      detail: `${request.refereeName} submitted on ${new Date(request.submittedAt).toLocaleDateString()}.`,
+      detail: `${request.refereeName} submitted on ${formatDate(request.submittedAt, request.timezone)}.`,
       tone: "success",
     };
   }

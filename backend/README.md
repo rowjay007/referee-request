@@ -20,6 +20,8 @@ CI workflows run `migrate up` automatically on `dev` (staging) and `main` (produ
 
 ## Candidate request endpoints
 
+- `DELETE /api/v1/account` (deletes the authenticated candidate account and private documents)
+
 - `POST /api/v1/requests`
 - `GET /api/v1/requests`
 - `GET /api/v1/requests/{requestId}`

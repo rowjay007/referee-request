@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"strings"
+	"time"
 )
 
 var ErrReferenceRequestNotDraft = errors.New("reference request is not a draft")

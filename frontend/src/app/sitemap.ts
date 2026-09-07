@@ -23,5 +23,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
       lastModified: now,
     },
+    {
+      url: `${appURL}/use-cases/academic-references`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+      lastModified: now,
+    },
+    {
+      url: `${appURL}/use-cases/job-references`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+      lastModified: now,
+    },
+    {
+      url: `${appURL}/use-cases/scholarships`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+      lastModified: now,
+    },
   ];
 }
