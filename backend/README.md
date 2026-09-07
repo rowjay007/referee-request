@@ -9,7 +9,7 @@ cp .env.example .env
 go run ./cmd/api
 ```
 
-For Render, use `go build -o referee-request-api ./cmd/api` as the build command and `./referee-request-api` as the start command. The service honors Render's `PORT` variable automatically. Set `OTEL_EXPORTER=stdout` for basic trace output or `OTEL_EXPORTER=none` when no trace exporter is configured.
+For Render, either use `go build -o referee-request-api ./cmd/api` as the build command and `./referee-request-api` as the start command, or configure the service to use `backend/Dockerfile`. The service honors Render's `PORT` variable automatically. Set `OTEL_EXPORTER=stdout` for basic trace output or `OTEL_EXPORTER=none` when no trace exporter is configured.
 
 ## Migrations
 
