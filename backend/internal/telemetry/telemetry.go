@@ -13,6 +13,9 @@ import (
 )
 
 func Setup(cfg *config.Config) (func(context.Context) error, error) {
+	if cfg.OTELExporter == "none" {
+		return func(context.Context) error { return nil }, nil
+	}
 	if cfg.OTELExporter != "stdout" {
 		return nil, errors.New("unsupported OTEL_EXPORTER")
 	}

@@ -47,3 +47,16 @@ func TestLoadAcceptsSupabaseStorage(t *testing.T) {
 		t.Fatalf("bucket = %q", cfg.StorageSupabaseBucket)
 	}
 }
+
+func TestLoadUsesRenderPortWhenAppPortIsUnset(t *testing.T) {
+	setRequiredEnvironment(t)
+	t.Setenv("PORT", "10000")
+	t.Setenv("APP_PORT", "")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if cfg.Port != "10000" {
+		t.Fatalf("port = %q, want 10000", cfg.Port)
+	}
+}
