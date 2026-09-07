@@ -58,6 +58,7 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 	documentHandler := handlers.NewDocumentHandler(cfg, requestStore, documentStorage)
 	refereeHandler := handlers.NewRefereeHandler(cfg, requestStore, documentStorage)
 	notificationHandler := handlers.NewNotificationHandler(cfg, notificationService)
+	accountHandler := handlers.NewAccountHandler(userStore, documentStorage)
 	if cfg.DispatchToken == "" {
 		return nil, errors.New("NOTIFICATION_DISPATCH_TOKEN is required")
 	}
@@ -73,6 +74,11 @@ func NewServer(cfg *config.Config, logger *slog.Logger, db *pgxpool.Pool) (http.
 			authRouter.Post("/signup", authHandler.Signup)
 			authRouter.Post("/login", authHandler.Login)
 			authRouter.Post("/google", authHandler.GoogleAuth)
+		})
+		r.Route("/account", func(accountRouter chi.Router) {
+			accountRouter.Use(authmiddleware.RequireCandidateAuth(cfg.JWTSecret))
+			accountRouter.Use(httprate.LimitByIP(5, time.Hour))
+			accountRouter.Delete("/", accountHandler.Delete)
 		})
 
 		r.Route("/requests", func(requestRouter chi.Router) {
