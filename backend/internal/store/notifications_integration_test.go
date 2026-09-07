@@ -92,6 +92,31 @@ func TestNotificationActionsRecordTimelineEvents(t *testing.T) {
 		}
 		assertNotificationAndEventCount(t, ctx, pool, requestID, "candidate_thank_you", "thank_you_queued", 1)
 	})
+
+	t.Run("recovers stale sending notification after restart", func(t *testing.T) {
+		requestID := createNotificationTestRequest(t, ctx, pool, candidateID, "sent")
+		var notificationID uuid.UUID
+		err := pool.QueryRow(ctx, `
+			INSERT INTO notification_outbox (
+				reference_request_id, notification_type, channel, recipient_email,
+				recipient_name, subject, html_body, status, attempt_count, max_attempts,
+				available_at, updated_at
+			) VALUES ($1, 'deadline_reminder', 'email', 'referee@example.com', 'Referee',
+				'Reference reminder', '<p>Reminder</p>', 'sending', 1, 5,
+				NOW() - interval '11 minutes', NOW() - interval '11 minutes')
+			RETURNING id`, requestID).Scan(&notificationID)
+		if err != nil {
+			t.Fatalf("create stale notification: %v", err)
+		}
+
+		items, err := store.ClaimNotificationBatch(ctx, 1)
+		if err != nil {
+			t.Fatalf("claim stale notification: %v", err)
+		}
+		if len(items) != 1 || items[0].ID != notificationID || items[0].Status != "sending" {
+			t.Fatalf("claimed items = %#v", items)
+		}
+	})
 }
 
 func createNotificationTestRequest(t *testing.T, ctx context.Context, pool *pgxpool.Pool, candidateID uuid.UUID, status string) uuid.UUID {

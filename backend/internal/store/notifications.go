@@ -3,9 +3,10 @@ package store
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"time"
 )
 
 type NotificationOutboxItem struct {
@@ -65,7 +66,10 @@ func (s *ReferenceRequestStore) ClaimNotificationBatch(ctx context.Context, limi
 		`WITH candidates AS (
 		    SELECT id
 		    FROM notification_outbox
-		    WHERE status IN ('queued', 'failed')
+		    WHERE (
+		        status IN ('queued', 'failed')
+		        OR (status = 'sending' AND updated_at <= NOW() - interval '10 minutes')
+		    )
 		      AND attempt_count < max_attempts
 		      AND available_at <= NOW()
 		    ORDER BY created_at ASC
