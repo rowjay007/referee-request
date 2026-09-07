@@ -3,12 +3,11 @@ package store
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"os"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestRequestFeatureLifecycle(t *testing.T) {
@@ -124,5 +123,28 @@ func TestRequestFeatureLifecycle(t *testing.T) {
 		if err != nil || view.Status != "in_progress" || view.InProgressAt == nil {
 			t.Fatalf("in-progress attempt %d = %#v, %v", attempt+1, view, err)
 		}
+	}
+
+	request, thirdInvitation, err := s.ReplaceReferee(ctx, ReplacementInput{RequestID: request.ID, CandidateUserID: candidateID,
+		RefereeName: "Third Referee", RefereeEmail: "third@example.com", RefereeRelationship: "Mentor",
+		TokenHash: "token-three", ExpiresAt: deadline, RefereeLink: "https://example.test/three"})
+	if err != nil {
+		t.Fatalf("replace before decline: %v", err)
+	}
+	if request.Status != "sent" || request.ActiveInvitationID == nil || *request.ActiveInvitationID != thirdInvitation.ID {
+		t.Fatalf("replacement before decline = %#v", request)
+	}
+	view, err = s.DecideRefereeInvitationByTokenHash(ctx, RefereeDecisionInput{TokenHash: "token-three", Decision: "declined"})
+	if err != nil || view.Status != "declined" {
+		t.Fatalf("declined invitation = %#v, %v", view, err)
+	}
+	request, fourthInvitation, err := s.ReplaceReferee(ctx, ReplacementInput{RequestID: request.ID, CandidateUserID: candidateID,
+		RefereeName: "Fourth Referee", RefereeEmail: "fourth@example.com", RefereeRelationship: "Mentor",
+		TokenHash: "token-four", ExpiresAt: deadline, RefereeLink: "https://example.test/four"})
+	if err != nil {
+		t.Fatalf("replace after decline: %v", err)
+	}
+	if request.Status != "sent" || request.ActiveInvitationID == nil || *request.ActiveInvitationID != fourthInvitation.ID {
+		t.Fatalf("replacement after decline = %#v", request)
 	}
 }
