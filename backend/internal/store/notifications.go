@@ -177,7 +177,7 @@ func (s *ReferenceRequestStore) QueueDeadlineReminders(ctx context.Context, lead
 		      '<p>This is a gentle reminder from RefereeRequest for the reference request by <strong>' || u.full_name || '</strong>.</p>' ||
 		      '<p><strong>Institution/Company:</strong> ' || r.institution_name || '<br />' ||
 		      '<strong>Programme/Role:</strong> ' || r.programme_name || '<br />' ||
-		      '<strong>Deadline:</strong> ' || to_char(r.deadline_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI UTC') || '</p>' ||
+		      '<strong>Deadline:</strong> ' || to_char(r.deadline_at AT TIME ZONE COALESCE(NULLIF(r.timezone, ''), 'UTC'), 'YYYY-MM-DD HH24:MI') || ' ' || COALESCE(NULLIF(r.timezone, ''), 'UTC') || '</p>' ||
 		      '<p>You can continue using your secure link already sent to your email inbox.</p>' ||
 		      '<p>Thank you.</p>' ||
 		      '</div>'
@@ -233,7 +233,7 @@ func (s *ReferenceRequestStore) QueueManualReminderForCandidate(ctx context.Cont
 		      '<p>This is a reminder from RefereeRequest for the reference request by <strong>' || u.full_name || '</strong>.</p>' ||
 		      '<p><strong>Institution/Company:</strong> ' || r.institution_name || '<br />' ||
 		      '<strong>Programme/Role:</strong> ' || r.programme_name || '<br />' ||
-		      '<strong>Deadline:</strong> ' || to_char(r.deadline_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI UTC') || '</p>' ||
+		      '<strong>Deadline:</strong> ' || to_char(r.deadline_at AT TIME ZONE COALESCE(NULLIF(r.timezone, ''), 'UTC'), 'YYYY-MM-DD HH24:MI') || ' ' || COALESCE(NULLIF(r.timezone, ''), 'UTC') || '</p>' ||
 		      '<p>Please use your secure request link in your inbox to continue.</p>' ||
 		      '</div>'
 		    ),

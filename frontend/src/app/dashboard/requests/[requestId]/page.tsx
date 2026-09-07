@@ -142,6 +142,16 @@ export default function RequestDetailPage() {
           invitationData,
         ]) => {
           setRequest(requestData.request);
+          if (requestData.request.status === "submitted") {
+            posthog.capture("request_completed", {
+              request_id: requestData.request.id,
+              opportunity_type: requestData.request.opportunityType,
+              completed_before_deadline:
+                requestData.request.submittedAt !== null &&
+                new Date(requestData.request.submittedAt).getTime() <=
+                  new Date(requestData.request.deadlineAt).getTime(),
+            });
+          }
           setDraft(toDraftFields(requestData.request));
           setDocuments(documentData.documents);
           setEvents(eventData.events);

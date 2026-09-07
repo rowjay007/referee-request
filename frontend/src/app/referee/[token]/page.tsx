@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
 import { useParams } from "next/navigation";
+import { formatDateTime } from "@/lib/global-formatting";
 import posthog from "posthog-js";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -125,7 +126,7 @@ export default function RefereePage() {
         },
       );
       setMessage(
-        `Reference submitted successfully on ${new Date(data.submission.submittedAt).toLocaleString()}.`,
+        `Reference submitted successfully on ${formatDateTime(data.submission.submittedAt, request?.timezone)}.`,
       );
       posthog.capture("reference_submitted");
       setRequest((current) =>
@@ -256,7 +257,7 @@ export default function RefereePage() {
         <p className="mt-2 text-sm text-muted">
           Please review the details below and submit your reference before{" "}
           <span className="font-medium text-foreground">
-            {new Date(request.deadlineAt).toLocaleString()}
+            {formatDateTime(request.deadlineAt, request.timezone)}
           </span>
           .
         </p>
