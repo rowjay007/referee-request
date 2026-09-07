@@ -2,12 +2,11 @@ package config
 
 import (
 	"errors"
+	"github.com/joho/godotenv"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -39,9 +38,14 @@ type Config struct {
 
 func Load() (*Config, error) {
 	_ = godotenv.Load()
+	environment := getEnv("APP_ENV", "development")
+	storageProvider := getEnv("STORAGE_PROVIDER", "local")
+	if environment == "production" && os.Getenv("STORAGE_PROVIDER") == "" {
+		storageProvider = "supabase"
+	}
 
 	cfg := &Config{
-		Environment:            getEnv("APP_ENV", "development"),
+		Environment:            environment,
 		Port:                   getEnv("APP_PORT", getEnv("PORT", "8080")),
 		BaseURL:                getEnv("APP_BASE_URL", "http://localhost:8080"),
 		FrontendBaseURL:        getEnv("FRONTEND_BASE_URL", "http://localhost:3000"),
@@ -51,7 +55,7 @@ func Load() (*Config, error) {
 		JWTSecret:              os.Getenv("JWT_SECRET"),
 		OTELExporter:           getEnv("OTEL_EXPORTER", "stdout"),
 		CORSAllowedOrigins:     splitCSV(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")),
-		StorageProvider:        getEnv("STORAGE_PROVIDER", "local"),
+		StorageProvider:        storageProvider,
 		StorageLocalRoot:       getEnv("STORAGE_LOCAL_ROOT", "./tmp/storage"),
 		StorageSupabaseBucket:  getEnv("STORAGE_SUPABASE_BUCKET", "reference-documents"),
 		SupabaseServiceRoleKey: getEnv("SUPABASE_SERVICE_ROLE_KEY", ""),

@@ -60,3 +60,18 @@ func TestLoadUsesRenderPortWhenAppPortIsUnset(t *testing.T) {
 		t.Fatalf("port = %q, want 10000", cfg.Port)
 	}
 }
+
+func TestLoadDefaultsProductionStorageToSupabase(t *testing.T) {
+	setRequiredEnvironment(t)
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("STORAGE_PROVIDER", "")
+	t.Setenv("SUPABASE_URL", "https://project.supabase.co")
+	t.Setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if cfg.StorageProvider != "supabase" {
+		t.Fatalf("storage provider = %q, want supabase", cfg.StorageProvider)
+	}
+}
